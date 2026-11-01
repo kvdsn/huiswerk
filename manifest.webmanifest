@@ -1,0 +1,16 @@
+{
+  "name": "Huiswerk",
+  "short_name": "Huiswerk",
+  "description": "Dictee en rekenen oefenen voor het 2de leerjaar.",
+  "lang": "nl-BE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fdf2f8",
+  "theme_color": "#fbe3f1",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "bron": "https://werkblaadjes.be/woordpakket/woordpakket-2deleerjaar.php",
+  "leerjaar": 2,
+  "pakketten": {
+    "1": ["tien", "de man", "dus", "de deur", "het", "het net", "nee", "de vis", "een", "het vuur", "ik won", "de zoon", "me", "hij gaat", "er", "de heer", "de zee", "de", "de soep", "af"],
+    "2": ["de knal", "hij staat", "de ster", "het (de) snoep", "het spel", "het spook", "stuk", "de stam", "smal", "de knoop", "ik stop", "de spin", "ik speel", "wij staan", "ik steek", "de steen", "het stuur", "de knop", "de stoel", "ik snik"],
+    "3": ["het vlees", "de tram", "slim", "ik zwom", "de groep", "ik kroop", "ik bleef", "ik zweet", "dwaas", "de kleur", "de fles", "de brief", "ik sliep", "de broek", "plus", "groen", "druk", "de gleuf", "zwaar", "broer"],
+    "4": ["de muis", "het luik", "uit", "het stuur", "de fluit", "de uil", "de buik", "lui", "de kleur", "bruin", "de spuit", "de kuil", "ik kruip", "de snuit", "de tuin", "het huis", "ruim", "het fruit", "de gleuf", "vuil"],
+    "5": ["het ei", "ziek", "ik zei", "niet", "ik zie", "de geit", "de reis", "lief", "klein", "het plein", "de trein", "wie", "het bier", "de klei", "diep", "de friet", "tien", "ik sliep", "mei", "de wei"],
+    "6": ["mee", "ja", "de knie", "wie", "twee", "de ma", "de pa", "zo", "de trui", "de zee", "de tweede", "meegaan", "ik sta", "nee", "de fee", "nu", "de slee", "meedoen", "ik ga", "drie"],
+    "7": ["de hulp", "als", "de arm", "paars", "erg", "ons", "duurt", "hij voelt", "de hals", "de melk", "het dorp", "elf", "de film", "de beurt", "eens", "iets", "de fiets", "ik hielp", "hij zoekt", "juist"],
+    "8": ["ik zei", "hij", "klein", "de trein", "wij", "ik bijt", "fijn", "mijn", "het ei", "blij", "vrij", "de reis", "ik blijf", "zij", "mei", "de prijs", "het plein", "hij kijkt", "de wei", "het einde"],
+    "9": ["mooi", "de haai", "zij gooit", "ik draai", "de vlooien", "mooier", "hij groeit", "ik gooi", "ik groei", "de kooi", "saai", "nooit", "wij draaien", "de koeien", "oei", "hij draait", "de kooien", "mooie", "taai", "jullie gooien"],
+    "10": ["jij groeide", "wij geeuwen", "nieuwe", "wij gooiden", "de leeuwen", "de sneeuw", "ik gloei", "nieuw", "ik draaide", "wij draaiden", "de kraai", "ik geeuw", "de kraaien", "het hooi", "wij gloeien", "saaie", "de leeuw", "jullie groeien", "ik gooide", "de mooiste"],
+    "11": ["de stroom", "ik schiet", "hij schreeuwt", "het schijnt", "het schip", "de schok", "de schoen", "de school", "scheen", "ik schreef", "de schuur", "hij schrikt", "ik sprak", "de straat", "zij schrijft", "de schat", "de straf", "de streep", "hij spreekt", "hij schopt"],
+    "12": ["het begin", "liefst", "het geweer", "het bezoek", "de broers", "het geheim", "zwart", "de dorst", "gelijk", "het verdriet", "ik vertel", "de flits", "hij bestaat", "sterk", "het verhaal", "de plaats", "je blijft", "zij durft", "hij steekt", "hij helpt"],
+    "13": ["luid", "het bloed", "breed", "de brandweer", "ik heb", "het veld", "de grond", "de ramp", "de vriend", "rood", "het bed", "goedkoop", "de draad", "hard", "het zwembad", "het hart", "de tent", "ik sluit", "het hoofd", "het strand"],
+    "14": ["het einde", "zij vielen", "de weide", "fijne", "groene", "de vijfde", "de keuken", "wijde", "hij huilde", "juiste", "luide", "de deuren", "bruine", "leuke", "diepe", "wij riepen", "goede", "de heide", "rijke", "mijn moeke"],
+    "15": ["hij denkt", "de vingers", "ik dank", "hij brengt", "ik spring", "hij klonk", "de drank", "wij drinken", "links", "bang", "ik breng", "de bank", "jonge", "ik sprong", "de winkel", "het ding", "de plank", "de slang", "wij vangen", "eng"],
+    "16": ["ik zou", "de pauw", "de saus", "de fout", "flauw", "het goud", "het hout", "de paus", "jouw", "stout", "oud", "het gebouw", "jou", "de auto", "de ouders", "de vrouwen", "nou", "de vrouw", "blauwe", "koud"],
+    "17": ["het varken", "de bergen", "de duivels", "kleiner", "de hoofden", "de sleutel", "buiten", "de winter", "de morgen", "dieper", "ik wandel", "de wortel", "de sleutels", "de vleugels", "de tijgers", "de duivel", "ik luister", "vroeger", "anders", "de moeders"],
+    "18": ["de nachten", "hij legt", "de vlucht", "zij volgt", "jij krijgt", "hij vliegt", "ik zucht", "hij draagt", "slecht", "zij lacht", "jij ligt", "acht", "het gezicht", "de bocht", "de lichten", "hij jaagt", "de kracht", "jij zegt", "dicht", "zij vraagt"],
+    "19": ["de kippen", "wij zwemmen", "de potten", "binnen", "de bossen", "de ratten", "wij kennen", "witte", "zij kunnen", "alle", "zij missen", "wij wassen", "de messen", "zij liggen", "wij stoppen", "zij zullen", "gekke", "de zakken", "jullie", "de sokken"],
+    "20": ["tussen", "de remmen", "wij willen", "zij kloppen", "jullie rennen", "de bussen", "de vissen", "de modder", "jullie winnen", "alleen", "alles", "wij klimmen", "de poppen", "de zussen", "zij stappen", "zij trekken", "de appel", "wij zeggen", "de stokken", "zij zetten"],
+    "21": ["het oog", "de boog", "ik krijg", "de berg", "ik lach", "de mug", "echt", "hij kocht", "ik volg", "zacht", "ik leg", "een slag", "pech", "de dwerg", "het licht", "de nacht", "ik zorg", "zich", "ik sloeg", "recht"],
+    "22": ["de apen", "dure", "de beker", "de bomen", "wij lopen", "de buren", "de dame", "grote", "de kamers", "de ezel", "duren", "de tafel", "de muren", "het teken", "de vogels", "het water", "zeven", "de uren", "de deken", "over"],
+    "23": ["wij roepen", "de bakker", "de scholen", "wij bellen", "deze", "de maanden", "mager", "zij spelen", "de dwergen", "negen", "de koppen", "dikke", "het konijn", "de olie", "wij duiken", "zij zullen", "de schapen", "de poorten", "de vuren", "de lampen"],
+    "24": ["blauw", "ik heb", "nieuw", "de leeuw", "de bocht", "de hoed", "saai", "nooit", "hij groeit", "de euro", "wij kruipen", "hij volgt", "de schoenen", "het gebouw", "ik vergeet", "de pech", "leeg", "het plein", "de vijfde", "ik schrijf"],
+    "25": ["de regen", "de geuren", "de appels", "wij geven", "de spiegel", "zij blijven", "zure", "de paarden", "zij snoepen", "wij kunnen", "de zomer", "de duinen", "de soorten", "de poppen", "de geiten", "wij speelden", "open", "zij trekken", "de haren", "jullie zitten"],
+    "26": ["de brandweer", "een vrijdag", "hij kruipt", "de haai", "zij hangt", "de koeien", "nieuwe", "de ouders", "de auto", "ik lach", "hij zucht", "het strand", "de weide", "omhoog", "mooie", "hij vliegt", "de ingang", "de bank", "hij denkt", "de schreeuw"]
+  }
+}
