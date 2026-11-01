@@ -34,6 +34,7 @@ npm test
 | `js/app.js` | Screens and flow |
 | `js/speech.js` | Speaking and listening (nl-BE) |
 | `js/settings.js` | Settings stored on the device |
+| `js/recordings.js` | Words recorded in a parent's voice, stored on the device only |
 | `js/logic/` | Voice commands, word rounds, math questions and number parsing (unit tested) |
 | `js/ui/mascot.js` | The unicorn and its animations |
 | `sw.js` | Offline cache |

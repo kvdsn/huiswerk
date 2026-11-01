@@ -11,6 +11,7 @@ const FILES = [
   'js/app.js',
   'js/settings.js',
   'js/speech.js',
+  'js/recordings.js',
   'js/logic/commands.js',
   'js/logic/words.js',
   'js/logic/math.js',

@@ -1,9 +1,12 @@
 import { loadSettings, saveSettings } from './settings.js';
 import { speak, stopSpeaking, flemishVoiceInfo, preloadVoices, Listener, canListen, simulateSpeech } from './speech.js';
 import { matchCommandInAlternatives } from './logic/commands.js';
-import { buildRound, displayForm } from './logic/words.js';
+import { buildRound, displayForm, spokenForm } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
 import { mountMascot } from './ui/mascot.js';
+import {
+  recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
+} from './recordings.js';
 
 const app = document.getElementById('app');
 let settings = loadSettings();
@@ -22,6 +25,7 @@ function render(html) {
   cleanups = [];
   screenId++;
   stopSpeaking();
+  stopPlayback();
   app.innerHTML = `<section class="screen">${html}</section>`;
   window.scrollTo({ top: 0 });
   return screenId;
@@ -61,7 +65,7 @@ function bindBack() {
 }
 
 function go(name, ...args) {
-  const screens = { home, dicteeKies, rekenenStart, instellingen };
+  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken };
   (screens[name] || home)(...args);
 }
 
@@ -152,23 +156,36 @@ function dicteeKies() {
 
 function dicteeIntro(round, title) {
   if (!round.length) return go('dicteeKies');
-  render(`
+  const id = render(`
     ${topbar(title, 'dicteeKies')}
     <div class="center">
       <div class="mascot-wrap"></div>
       <p class="lead">Neem je blad en je potlood.<br>Ik zeg ${round.length} woordjes.</p>
       <p class="hint">Zeg <b>“klaar”</b> als je een woord geschreven hebt.<br>
         Zeg <b>“wablieft?”</b> als je het nog eens wil horen.</p>
-      <button class="btn primary big" id="start">Ik ben klaar! 🦄</button>
+      <button class="btn primary big" id="start" disabled>Ik ben klaar! 🦄</button>
     </div>
   `);
   bindBack();
   mascot();
-  // The first speech must come from a tap (Safari).
-  $('#start').addEventListener('click', () => dicteeRun(round, title));
+
+  // Load recordings in the parent's voice now, so the first word can play
+  // straight from the tap below (iOS only allows sound from a tap).
+  let urls = new Map();
+  let started = false;
+  onLeave(() => started || revokeUrls(urls));
+  loadUrls(round.map((item) => item.spoken)).then((loaded) => {
+    if (!isCurrent(id)) return revokeUrls(loaded);
+    urls = loaded;
+    $('#start').disabled = false;
+  });
+  $('#start').addEventListener('click', () => {
+    started = true;
+    dicteeRun(round, title, urls);
+  });
 }
 
-function dicteeRun(round, title) {
+function dicteeRun(round, title, urls = new Map()) {
   const id = render(`
     ${topbar(title, 'dicteeKies')}
     <div class="center">
@@ -203,6 +220,7 @@ function dicteeRun(round, title) {
     },
   });
   onLeave(() => listener.stop());
+  onLeave(() => revokeUrls(urls));
 
   function show() {
     $('.counter').textContent = `Woord ${index + 1} van ${round.length}`;
@@ -216,7 +234,9 @@ function dicteeRun(round, title) {
     listener.stop(); // Don't let the microphone hear the app itself.
     const speaker = $('#repeat');
     speaker.classList.add('talking');
-    await say(round[index].spoken);
+    // The parent's own recording if there is one, otherwise Ellen.
+    const url = urls.get(recordingKey(round[index].spoken));
+    await (url ? playUrl(url) : say(round[index].spoken));
     if (!isCurrent(id) || mine !== speechSeq) return;
     speaker.classList.remove('talking');
     listener.start();
@@ -229,6 +249,7 @@ function dicteeRun(round, title) {
     if (index + 1 >= round.length) {
       finishing = true;
       speechSeq++;
+      stopPlayback();
       listener.stop();
       $('.progress > span').style.width = '100%';
       await say('Dat was het laatste woord. Goed gedaan!');
@@ -537,6 +558,13 @@ async function instellingen() {
         </div>
         <div id="voice-note"></div>
       </div>
+      <div class="card">
+        <h2>🎙️ Eigen stem</h2>
+        <p>Spreek de woordjes zelf in. Bij een dictee hoort je kind dan jouw stem; woordjes die je nog niet
+          inspraak, leest Ellen voor. De opnames blijven op dit toestel.</p>
+        <p id="rec-count"></p>
+        <button class="btn primary" id="to-record">Woorden inspreken</button>
+      </div>
     </div>
   `);
   bindBack();
@@ -611,6 +639,178 @@ async function instellingen() {
   select.addEventListener('change', () => update((s) => { s.voiceURI = select.value; }));
   $('#rate').addEventListener('input', (event) => update((s) => { s.rate = Number(event.target.value); }));
   $('#test-voice').addEventListener('click', () => say(`${greeting()} Het woord is: de regenboog.`));
+  $('#to-record').addEventListener('click', () => go('inspreken'));
+  const total = allWordKeys();
+  const keys = await recordedKeys();
+  if (isCurrent(id)) {
+    const done = [...total].filter((key) => keys.has(key)).length;
+    $('#rec-count').textContent = `${done} van ${total.size} woordjes ingesproken.`;
+  }
+}
+
+// ---------- Recording words in a parent's voice ----------
+
+/** Unique words of a package, in the school's order, as spoken. */
+function packageWords(packageId) {
+  const seen = new Set();
+  return (pakketten[packageId] || []).map(spokenForm).filter((spoken) => {
+    const key = recordingKey(spoken);
+    return !seen.has(key) && seen.add(key);
+  });
+}
+
+function allWordKeys() {
+  return new Set(Object.keys(pakketten).flatMap((packageId) => packageWords(packageId).map(recordingKey)));
+}
+
+async function inspreken(packageId) {
+  const ids = Object.keys(pakketten).map(Number);
+  const id = render(`
+    ${topbar('Woorden inspreken', 'instellingen')}
+    <div class="settings">
+      <div class="card">
+        <h2>Kies een pakket</h2>
+        <p>Groen = alle woordjes ingesproken.</p>
+        <div class="chips" id="rec-packages"></div>
+      </div>
+      <div class="card record-card">
+        <p class="counter"></p>
+        <p class="record-word"></p>
+        <p class="record-status" aria-live="polite"></p>
+        <div class="row">
+          <button class="icon-btn" id="rec-prev" aria-label="Vorig woord">⬅️</button>
+          <button class="btn primary big" id="rec-toggle">🎙️ Opnemen</button>
+          <button class="icon-btn" id="rec-play" aria-label="Beluisteren">▶️</button>
+          <button class="icon-btn" id="rec-next" aria-label="Volgend woord">➡️</button>
+        </div>
+        <p class="hint">Tik op <b>Opnemen</b>, zeg het woord, en tik op <b>Stop</b>.
+          Je hoort de opname meteen terug en gaat dan naar het volgende woord.</p>
+      </div>
+    </div>
+  `);
+  bindBack();
+
+  if (!canRecord()) {
+    $('.record-card').innerHTML = '<p class="note">Opnemen werkt niet in deze browser.</p>';
+    return;
+  }
+
+  const recorder = new Recorder();
+  onLeave(() => recorder.close());
+
+  let keys = await recordedKeys();
+  if (!isCurrent(id)) return;
+
+  const isComplete = (pid) => packageWords(pid).every((spoken) => keys.has(recordingKey(spoken)));
+  let current = Number(packageId) || ids.find((pid) => settings.enabledPackages.includes(pid) && !isComplete(pid)) || ids[0];
+  let words = [];
+  let index = 0;
+  let take = null; // The recording in progress.
+  let step = 0; // Bumped on every navigation; stale playbacks must not advance.
+
+  const word = () => words[index];
+  const status = (text) => { $('.record-status').textContent = text; };
+
+  function renderPackages() {
+    $('#rec-packages').innerHTML = ids
+      .map((pid) => `<button class="chip${isComplete(pid) ? ' done' : ''}" data-value="${pid}"
+        aria-pressed="${pid === current}">${pid}</button>`)
+      .join('');
+  }
+
+  function show() {
+    const recorded = keys.has(recordingKey(word()));
+    const count = words.filter((spoken) => keys.has(recordingKey(spoken))).length;
+    $('.counter').textContent = `Pakket ${current} · woord ${index + 1} van ${words.length} · ${count} ingesproken`;
+    $('.record-word').textContent = word();
+    $('.record-word').classList.toggle('recorded', recorded);
+    status(recorded ? '✓ Al ingesproken. Tik op Opnemen om het opnieuw te doen.' : '');
+    $('#rec-play').disabled = !recorded;
+    $('#rec-prev').disabled = index === 0;
+    $('#rec-next').disabled = index === words.length - 1;
+  }
+
+  function openPackage(pid) {
+    current = pid;
+    words = packageWords(pid);
+    const firstOpen = words.findIndex((spoken) => !keys.has(recordingKey(spoken)));
+    index = firstOpen === -1 ? 0 : firstOpen;
+    renderPackages();
+    goTo(index);
+  }
+
+  function goTo(i) {
+    if (take) return;
+    step++;
+    stopPlayback();
+    index = Math.max(0, Math.min(words.length - 1, i));
+    show();
+  }
+
+  async function play() {
+    const url = (await loadUrls([word()])).get(recordingKey(word()));
+    if (!url || !isCurrent(id)) return;
+    await playUrl(url);
+    URL.revokeObjectURL(url);
+  }
+
+  async function toggle() {
+    const button = $('#rec-toggle');
+    if (take) {
+      // Stop and save. Clear `take` first so the auto-stop handler below
+      // doesn't save the same recording a second time.
+      const finished = take;
+      take = null;
+      const blob = await finished.stop();
+      button.textContent = '🎙️ Opnemen';
+      button.classList.remove('recording');
+      if (!isCurrent(id)) return;
+      if (blob.size < 800) return status('Dat was te kort. Probeer opnieuw.');
+      const spoken = word();
+      await saveRecording(spoken, blob);
+      keys.add(recordingKey(spoken));
+      renderPackages();
+      show();
+      status('✓ Opgeslagen.');
+      const mine = ++step;
+      await play();
+      if (!isCurrent(id) || mine !== step) return;
+      if (index < words.length - 1) {
+        await wait(350);
+        if (isCurrent(id) && mine === step) goTo(index + 1);
+      } else {
+        status(isComplete(current) ? `🎉 Pakket ${current} is klaar!` : '✓ Opgeslagen. Er zijn nog woordjes zonder opname.');
+      }
+      return;
+    }
+
+    // Start recording.
+    step++;
+    stopPlayback();
+    try {
+      await recorder.open();
+    } catch {
+      return status('De microfoon mag niet. Sta de microfoon toe in de instellingen van Safari.');
+    }
+    if (!isCurrent(id)) return;
+    take = recorder.record({ maxMs: 6000 });
+    button.textContent = '⏹️ Stop';
+    button.classList.add('recording');
+    status('Spreek het woord in…');
+    // Auto-stop after 6 seconds also saves.
+    take.done.then(() => take && isCurrent(id) && toggle());
+  }
+
+  $('#rec-packages').addEventListener('click', (event) => {
+    const chip = event.target.closest('.chip');
+    if (chip && !take) openPackage(Number(chip.dataset.value));
+  });
+  $('#rec-toggle').addEventListener('click', toggle);
+  $('#rec-play').addEventListener('click', () => { step++; play(); });
+  $('#rec-prev').addEventListener('click', () => goTo(index - 1));
+  $('#rec-next').addEventListener('click', () => goTo(index + 1));
+
+  openPackage(current);
 }
 
 // ---------- Start ----------

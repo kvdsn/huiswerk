@@ -424,6 +424,27 @@ button {
   font-weight: 700;
 }
 
+/* ---------- Recording ---------- */
+
+.record-card { text-align: center; display: grid; gap: 14px; justify-items: center; }
+.record-card .counter, .record-card .hint { margin: 0; }
+.record-card .counter { font-size: 18px; font-weight: 600; }
+.record-card .record-word {
+  margin: 6px 0;
+  font-size: clamp(44px, 8vw, 72px);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.record-card .record-word.recorded::after { content: ' ✓'; color: var(--good); font-size: 0.6em; }
+.record-card .record-status { min-height: 28px; margin: 0; font-size: 20px; font-weight: 600; color: var(--ink-soft); }
+.btn.recording {
+  background: linear-gradient(135deg, #f43f5e, #ec4899);
+  animation: pulse 900ms ease-in-out infinite;
+}
+.icon-btn[disabled] { opacity: 0.35; pointer-events: none; }
+.chip.done { background: #d1fae5; color: #065f46; }
+.chip.done[aria-pressed='true'] { background: linear-gradient(135deg, var(--mint-deep), #059669); color: white; }
+
 /* ---------- Settings ---------- */
 
 .settings { display: grid; gap: 20px; }
