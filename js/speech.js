@@ -125,6 +125,37 @@ export function stopSpeaking() {
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+// ---------- Diagnostics ----------
+// What the recogniser reported, newest last. Shown when the microphone badge
+// is tapped, to find out why listening fails on a device.
+
+const speechLog = [];
+const logWatchers = new Set();
+const started = performance.now();
+
+function log(text) {
+  const seconds = ((performance.now() - started) / 1000).toFixed(1).padStart(6);
+  speechLog.push(`${seconds}s  ${text}`);
+  if (speechLog.length > 60) speechLog.shift();
+  logWatchers.forEach((fn) => fn());
+}
+
+export function speechDiagnostics() {
+  const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const header = [
+    `beginscherm-app: ${standalone ? 'ja' : 'nee'}`,
+    `herkenning: ${window.SpeechRecognition ? 'SpeechRecognition' : window.webkitSpeechRecognition ? 'webkitSpeechRecognition' : 'geen'}`,
+    navigator.userAgent,
+  ];
+  return [...header, '', ...speechLog].join('\n');
+}
+
+/** Calls fn whenever the log changes; returns an unsubscribe function. */
+export function watchSpeechLog(fn) {
+  logWatchers.add(fn);
+  return () => logWatchers.delete(fn);
+}
+
 // Once the microphone (or speech service) is refused, stop asking until the
 // page is reloaded: 'denied' or 'unavailable'.
 let micBlocked = null;
@@ -222,15 +253,23 @@ export class Listener {
     rec.interimResults = this.interim;
     rec.maxAlternatives = 3;
 
-    rec.onstart = () => this.onState('listening');
+    rec.onstart = () => {
+      log('start');
+      this.onState('listening');
+    };
+    for (const name of ['audiostart', 'soundstart', 'speechstart', 'speechend', 'soundend', 'audioend', 'nomatch']) {
+      rec.addEventListener(name, () => log(name));
+    }
     rec.onresult = (event) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         const alternatives = Array.from(result, (alt) => alt.transcript.trim()).filter(Boolean);
+        log(`result${result.isFinal ? ' (final)' : ''}: ${alternatives.map((a) => `"${a}"`).join(' | ') || '(leeg)'}`);
         if (alternatives.length) this.onResult(alternatives, result.isFinal);
       }
     };
     rec.onerror = (event) => {
+      log(`error: ${event.error}${event.message ? ` – ${event.message}` : ''}`);
       // not-allowed: no microphone permission. service-not-allowed: speech
       // recognition is off (on a Mac: Siri/Dictation disabled).
       const blocked = { 'not-allowed': 'denied', 'service-not-allowed': 'unavailable' }[event.error];
@@ -241,6 +280,7 @@ export class Listener {
       }
     };
     rec.onend = () => {
+      log(`end (na ${((Date.now() - startedAt) / 1000).toFixed(1)}s)`);
       if (this.rec !== rec) return;
       this.rec = null;
       if (!this.active) {
@@ -251,6 +291,7 @@ export class Listener {
       const quickEnd = Date.now() - startedAt < 1000;
       this.failures = quickEnd ? this.failures + 1 : 0;
       if (this.failures >= 5) {
+        log('opgegeven: 5 keer na elkaar meteen gestopt');
         this.active = false;
         this.onState('unavailable');
         return;
@@ -260,9 +301,11 @@ export class Listener {
 
     this.rec = rec;
     const startedAt = Date.now();
+    log(`starten (continuous=${rec.continuous}, interim=${rec.interimResults})`);
     try {
       rec.start();
-    } catch {
+    } catch (error) {
+      log(`start mislukt: ${error.message}`);
       this.rec = null;
       this.onState('unavailable');
     }

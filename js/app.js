@@ -1,5 +1,7 @@
 import { loadSettings, saveSettings } from './settings.js';
-import { speak, stopSpeaking, flemishVoiceInfo, preloadVoices, Listener, canListen, simulateSpeech } from './speech.js';
+import {
+  speak, stopSpeaking, flemishVoiceInfo, preloadVoices, Listener, canListen, simulateSpeech, speechDiagnostics, watchSpeechLog,
+} from './speech.js';
 import { matchCommandInAlternatives } from './logic/commands.js';
 import { buildRound, displayForm, spokenForm } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
@@ -77,9 +79,25 @@ const MIC_TEXT = {
 };
 
 function micBadge() {
-  return `<div class="mic off" role="status"><span class="dot"></span><span class="mic-text">${
+  return `<button class="mic off" type="button" aria-live="polite"><span class="dot"></span><span class="mic-text">${
     canListen() ? MIC_TEXT.idle : MIC_TEXT.unavailable
-  }</span></div>`;
+  }</span></button>
+  <pre class="speech-log" hidden></pre>`;
+}
+
+// Tapping the microphone badge shows what speech recognition reported.
+function bindSpeechLog() {
+  const badge = $('.mic');
+  const panel = $('.speech-log');
+  const refresh = () => {
+    panel.textContent = speechDiagnostics();
+    panel.scrollTop = panel.scrollHeight;
+  };
+  badge.addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) refresh();
+  });
+  onLeave(watchSpeechLog(() => !panel.hidden && refresh()));
 }
 
 function setMic(state) {
@@ -201,6 +219,7 @@ function dicteeRun(round, title, urls = new Map()) {
     </div>
   `);
   bindBack();
+  bindSpeechLog();
 
   let index = 0;
   let finishing = false;
@@ -382,6 +401,7 @@ function rekenenRun(questions) {
     </div>
   `);
   bindBack();
+  bindSpeechLog();
   const m = mascot();
   const input = $('.answer-form input');
 
