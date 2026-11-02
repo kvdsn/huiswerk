@@ -1,8 +1,9 @@
 // Offline support. The app's own files come from the network when possible
 // (so a new version always arrives as one consistent set) and from the cache
-// when the iPad is offline. Other origins (Google Fonts) are left alone.
+// when the iPad is offline or the network is too slow. Other origins are left
+// alone; the app doesn't load anything from them.
 
-const CACHE = 'huiswerk-v3';
+const CACHE = 'huiswerk-v4';
 const FILES = [
   './',
   'index.html',
@@ -43,6 +44,7 @@ const FILES = [
   'assets/icon-192.png',
   'assets/icon-512.png',
   'assets/apple-touch-icon.png',
+  'assets/fonts/fredoka-latin.woff2',
 ];
 
 self.addEventListener('install', (event) => {
@@ -66,7 +68,9 @@ self.addEventListener('fetch', (event) => {
 async function networkFirst(request) {
   const cache = await caches.open(CACHE);
   try {
-    const response = await fetchWithTimeout(request, 4000);
+    // Wait at most 1.5 s per file: on weak Wi-Fi the cached copy is faster,
+    // and the modules load one after another, so waits add up.
+    const response = await fetchWithTimeout(request, 1500);
     if (response.ok) await cache.put(request, response.clone());
     return response;
   } catch {

@@ -8,6 +8,7 @@ The child writes the words on paper and says the math answers out loud. Klok lez
 - No backend and no accounts. No score history. Settings are stored on the device.
 - Language: Flemish Dutch (`nl-BE`), for both speaking (speechSynthesis) and listening (Safari speech recognition).
 - Each math question also has a button to type the answer instead of saying it.
+- Works offline once opened: a service worker keeps every file the app needs, including the Fredoka font, which is served with the app instead of from Google Fonts. Files come from the network first so a new version arrives in one piece, but after 1.5 s without an answer the cached copy is used, so weak Wi-Fi doesn't slow the start.
 
 ## Interface language and design
 - All text on screen is in Flemish Dutch, for example "Dictee", "Rekenen", "Instellingen", "Nog eens horen", "Goed zo!", "Klaar!". Flemish words are used where they differ from Netherlands Dutch, e.g. "juf" and "leerjaar".

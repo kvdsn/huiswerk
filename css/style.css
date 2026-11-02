@@ -1,5 +1,16 @@
 /* Huiswerk – unicorns & rainbows */
 
+/* Fredoka is served with the app (variable font, weights 300–700, Latin
+   subset from Google Fonts; licence in assets/fonts/OFL.txt) so it also
+   works offline. */
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('../assets/fonts/fredoka-latin.woff2') format('woff2');
+}
+
 :root {
   --pink: #f9a8d4;
   --pink-deep: #ec4899;

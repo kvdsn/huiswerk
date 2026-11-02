@@ -49,6 +49,7 @@ npm test
 | `js/ui/clock.js` | The clock for Klok lezen |
 | `js/ui/money.js` | Euro coins and notes for Geld |
 | `js/ui/sounds.js` | Answer sounds (Web Audio) |
+| `assets/fonts/` | The Fredoka font (SIL Open Font License), served with the app so it works offline |
 | `tools/artwork.html` | Artwork review page (local only) |
 | `sw.js` | Offline cache |
 
