@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="nl-BE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Huiswerk artwork</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+  <style>
+    :root { color-scheme: light; font-family: 'Fredoka', system-ui, sans-serif; color: #4c1d95; }
+    body { margin: 0; padding: 24px 16px 48px; background: linear-gradient(160deg, #fdf2f8, #f5f3ff 45%, #ecfdf5); }
+    main { max-width: 1100px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 32px; }
+    h2 { margin: 36px 0 12px; font-size: 24px; }
+    p.note { margin: 0 0 8px; color: #7c5aa6; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .grid.mascots { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    figure { margin: 0; padding: 14px 10px 10px; background: rgba(255, 255, 255, 0.8); border-radius: 20px;
+      display: grid; justify-items: center; gap: 6px; text-align: center; }
+    figure svg, figure img { width: 100%; height: auto; display: block; }
+    .mascots figure > div { width: 160px; aspect-ratio: 1; margin: 20px 0 6px; }
+    .mascots figure > div svg { overflow: visible; }
+    figcaption { font-size: 15px; font-weight: 600; }
+    figcaption small { display: block; font-weight: 400; color: #7c5aa6; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+    .page-title { display: flex; align-items: baseline; gap: 10px; }
+    .page-title span { color: #7c5aa6; font-size: 16px; }
+    .bg { height: 220px; border-radius: 20px; background: url('../assets/sparkles.svg'), linear-gradient(160deg, #fdf2f8, #f5f3ff 45%, #ecfdf5); background-size: 240px, auto; }
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 0; }
+    button { font: inherit; font-size: 16px; padding: 8px 16px; border-radius: 999px; border: 2px solid #c4b5fd; background: white; color: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Huiswerk – artwork</h1>
+    <p class="note">Everything below is loaded from the app's own code, so it is exactly what the app shows.</p>
+    <div class="controls">
+      <button id="happy">Unicorn: happy</button>
+      <button id="encourage">Unicorn: encourage</button>
+    </div>
+
+    <h2>Unicorn and page rewards</h2>
+    <div class="grid mascots" id="mascots"></div>
+
+    <h2>Reward icons</h2>
+    <div class="grid" id="icons"></div>
+
+    <div id="pages"></div>
+
+    <h2>App icon and background</h2>
+    <div class="grid">
+      <figure><img src="../assets/icon.svg" alt=""><figcaption>icon.svg</figcaption></figure>
+      <figure><img src="../assets/icon-512.png" alt=""><figcaption>icon-512.png</figcaption></figure>
+      <figure><img src="../assets/apple-touch-icon.png" alt=""><figcaption>apple-touch-icon.png</figcaption></figure>
+    </div>
+    <div class="bg" style="margin-top:16px"></div>
+  </main>
+
+  <script type="module">
+    import { mountMascot } from '../js/ui/mascot.js';
+    import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from '../js/ui/stickers.js';
+
+    const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const mascots = [];
+
+    const variants = [
+      { label: 'Zonder beloning', wear: [] },
+      ...ACCESSORIES.map((acc) => ({ label: acc.name, wear: [acc.id], code: `${acc.id} · pagina ${acc.page}` })),
+      { label: 'Alles samen', wear: ACCESSORIES.map((acc) => acc.id) },
+    ];
+    for (const v of variants) {
+      const fig = document.createElement('figure');
+      fig.innerHTML = `<div></div><figcaption>${esc(v.label)}${v.code ? `<small>${esc(v.code)}</small>` : ''}</figcaption>`;
+      document.getElementById('mascots').append(fig);
+      mascots.push(mountMascot(fig.firstElementChild, { wear: v.wear }));
+    }
+
+    document.getElementById('icons').innerHTML = ACCESSORIES.map((acc) =>
+      `<figure>${ACCESSORY_ICONS[acc.id]}<figcaption>${esc(acc.name)}<small>${esc(acc.id)}</small></figcaption></figure>`).join('');
+
+    document.getElementById('pages').innerHTML = STICKER_PAGES.map((page) => {
+      const reward = ACCESSORIES.find((acc) => acc.page === page.id);
+      return `<h2 class="page-title">Stickers: ${esc(page.title)} <span>→ ${esc(reward ? reward.name : '')}</span></h2>
+        <div class="grid">${page.stickers.map((s) =>
+          `<figure>${s.svg}<figcaption>${esc(s.name)}<small>${esc(s.id)}</small></figcaption></figure>`).join('')}</div>`;
+    }).join('');
+
+    document.getElementById('happy').onclick = () => mascots.forEach((m) => m.react('happy'));
+    document.getElementById('encourage').onclick = () => mascots.forEach((m) => m.react('encourage'));
+  </script>
+</body>
+</html>

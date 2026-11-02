@@ -22,6 +22,8 @@ On localhost you can pretend the child said something from the browser console:
 simulateSpeech('klaar')
 ```
 
+To review all artwork (unicorn with rewards, stickers, icons), open <http://localhost:8765/tools/artwork.html>. The `tools/` folder is not published.
+
 ## Tests
 
 ```bash
