@@ -69,6 +69,79 @@ export async function loadUrls(spokenWords) {
   return urls;
 }
 
+// ---------- Backup ----------
+// One JSON file with every recording as a data: URL, so it can be kept in
+// Files (or anywhere) and restored on this or another device.
+
+const BACKUP_TYPE = 'huiswerk-opnames';
+
+const toDataUrl = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
+/** All recordings as a backup file, plus how many words it holds. */
+export async function exportRecordings() {
+  const keys = [...(await recordedKeys())];
+  const recordings = {};
+  for (const key of keys) {
+    const blob = await getRecording(key);
+    if (blob) recordings[key] = await toDataUrl(blob);
+  }
+  const json = JSON.stringify({ type: BACKUP_TYPE, version: 1, exported: new Date().toISOString(), recordings });
+  const date = new Date().toISOString().slice(0, 10);
+  const file = new File([json], `huiswerk-opnames-${date}.json`, { type: 'application/json' });
+  return { file, count: Object.keys(recordings).length };
+}
+
+/**
+ * Restores recordings from a backup file. Words already recorded on this
+ * device are replaced by the copy in the file. Returns the number restored;
+ * throws if the file is not a backup.
+ */
+export async function importRecordings(file) {
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch {
+    throw new Error('not-a-backup');
+  }
+  if (data?.type !== BACKUP_TYPE || typeof data.recordings !== 'object') throw new Error('not-a-backup');
+  let count = 0;
+  for (const [key, dataUrl] of Object.entries(data.recordings)) {
+    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:audio/')) continue;
+    const blob = await (await fetch(dataUrl)).blob();
+    await saveRecording(key, blob);
+    count++;
+  }
+  return count;
+}
+
+/**
+ * Hands the file to the iPad share sheet ("Bewaar in Bestanden"), or
+ * downloads it where sharing files isn't possible. Must run from a tap.
+ */
+export async function saveFile(file) {
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: file.name });
+      return true;
+    } catch (error) {
+      if (error.name === 'AbortError') return false; // Closed the share sheet.
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const link = Object.assign(document.createElement('a'), { href: url, download: file.name });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  return true;
+}
+
 export function revokeUrls(urls) {
   urls.forEach((url) => URL.revokeObjectURL(url));
 }

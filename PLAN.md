@@ -21,7 +21,7 @@ The child writes the words on paper and says the math answers out loud.
 - Each word is read once on its own. The child can tap a button to hear it again.
 - The child writes each word on paper. At the end, the app shows all the correct spellings, and the child or a parent taps right or wrong for each word.
 - "het (de) snoep" is read as "het snoep".
-- **Own voice:** a parent can record the words under Instellingen → Eigen stem → Woorden inspreken (one word at a time, played back, then on to the next). During a dictation the recording is played; words without a recording are read by Ellen. Recordings are stored only on the device (IndexedDB) and never uploaded, because the repository is public. A word that appears in several packages is recorded once.
+- **Own voice:** a parent can record the words under Instellingen → Eigen stem → Woorden inspreken (one word at a time, played back, then on to the next). During a dictation the recording is played; words without a recording are read by Ellen. Recordings are stored only on the device (IndexedDB) and never uploaded, because the repository is public. A word that appears in several packages is recorded once. A backup button saves all recordings to one file (via the share sheet, e.g. to Files) and can restore them on this or another device.
 - **Voice commands during a dictation:** the app listens after each word.
   - **Next word:** "ja", "klaar", "volgende", "oké"
   - **Repeat the word:** "wablieft?", "wat?", "zeg nog eens"

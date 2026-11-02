@@ -467,6 +467,9 @@ button {
 .settings { display: grid; gap: 20px; }
 .settings h2 { margin: 0 0 6px; font-size: 26px; }
 .settings p { margin: 0 0 14px; color: var(--ink-soft); font-size: 18px; }
+.settings h3 { margin: 22px 0 6px; font-size: 21px; }
+.settings .backup-row { justify-content: flex-start; margin-bottom: 12px; }
+.settings #backup-status { margin: 0; font-weight: 600; color: var(--ink); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .chip {

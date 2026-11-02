@@ -8,6 +8,7 @@ import { makeQuestions, checkAnswer } from './logic/math.js';
 import { mountMascot } from './ui/mascot.js';
 import {
   recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
+  exportRecordings, importRecordings, saveFile,
 } from './recordings.js';
 
 const app = document.getElementById('app');
@@ -585,6 +586,15 @@ async function instellingen() {
           inspraak, leest Ellen voor. De opnames blijven op dit toestel.</p>
         <p id="rec-count"></p>
         <button class="btn primary" id="to-record">Woorden inspreken</button>
+        <h3>Reservekopie</h3>
+        <p>Bewaar je opnames in een bestand, bijvoorbeeld in Bestanden. Zo raak je ze niet kwijt als de app
+          verwijderd wordt, en kan je ze terugzetten op dit of een ander toestel.</p>
+        <div class="row backup-row">
+          <button class="btn" id="backup-make">💾 Kopie maken</button>
+          <button class="btn" id="backup-restore">📂 Kopie terugzetten</button>
+          <input type="file" id="backup-file" accept=".json,application/json" hidden>
+        </div>
+        <p id="backup-status" aria-live="polite"></p>
       </div>
     </div>
   `);
@@ -661,12 +671,58 @@ async function instellingen() {
   $('#rate').addEventListener('input', (event) => update((s) => { s.rate = Number(event.target.value); }));
   $('#test-voice').addEventListener('click', () => say(`${greeting()} Het woord is: de regenboog.`));
   $('#to-record').addEventListener('click', () => go('inspreken'));
-  const total = allWordKeys();
-  const keys = await recordedKeys();
-  if (isCurrent(id)) {
+  const backupStatus = (text) => { $('#backup-status').textContent = text; };
+  const refreshCount = async () => {
+    const total = allWordKeys();
+    const keys = await recordedKeys();
+    if (!isCurrent(id)) return;
     const done = [...total].filter((key) => keys.has(key)).length;
     $('#rec-count').textContent = `${done} van ${total.size} woordjes ingesproken.`;
-  }
+  };
+
+  // Making the file takes a moment, and iPadOS only opens the share sheet
+  // straight from a tap. So: first tap makes the copy, second tap saves it.
+  let backup = null;
+  $('#backup-make').addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    if (backup) {
+      if (await saveFile(backup.file)) backupStatus(`✓ Kopie met ${backup.count} woordjes bewaard.`);
+      return;
+    }
+    button.disabled = true;
+    button.textContent = '⏳ Kopie maken…';
+    const made = await exportRecordings();
+    if (!isCurrent(id)) return;
+    button.disabled = false;
+    if (!made.count) {
+      button.textContent = '💾 Kopie maken';
+      return backupStatus('Er zijn nog geen opnames om te bewaren.');
+    }
+    backup = made;
+    const bytes = made.file.size;
+    const size = bytes < 1e6 ? `${Math.max(1, Math.round(bytes / 1e3))} kB` : `${(bytes / 1e6).toFixed(1).replace('.', ',')} MB`;
+    button.textContent = `📤 Kopie bewaren (${size})`;
+    button.classList.add('primary');
+    backupStatus(`De kopie met ${made.count} woordjes is klaar. Tik op “Kopie bewaren” en kies bv. “Bewaar in Bestanden”.`);
+  });
+
+  $('#backup-restore').addEventListener('click', () => $('#backup-file').click());
+  $('#backup-file').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    backupStatus('⏳ Opnames terugzetten…');
+    try {
+      const count = await importRecordings(file);
+      if (!isCurrent(id)) return;
+      backupStatus(`✓ ${count} woordjes teruggezet.`);
+      refreshCount();
+    } catch {
+      if (isCurrent(id)) backupStatus('Dit bestand is geen kopie van de opnames.');
+    }
+  });
+
+  refreshCount();
 }
 
 // ---------- Recording words in a parent's voice ----------
