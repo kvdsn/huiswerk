@@ -17,8 +17,8 @@ The child writes the words on paper and says the math answers out loud.
 - Large touch targets and a large rounded font that is easy for a child to read. Built for the iPad in both portrait and landscape.
 
 ## Help
-- A ❓ button on the home screen opens "Hoe werkt het?": short child-friendly cards for Dictee, Rekenen, talking to the app, and Stickers, each with a 🔊 button that has Ellen read it aloud, plus a card for parents about Instellingen.
-- The sticker book starts with a short explanation of how to earn stickers (also with 🔊).
+- A ❓ button on the home screen opens "Hoe werkt het?": short child-friendly cards for Dictee, Rekenen, talking to the app, and Stickers, plus a card for parents about Instellingen.
+- The sticker book starts with a short explanation of how to earn stickers.
 
 ## Dictation (dictee)
 - Words come from `data/woordpakketten.json` (26 packages from werkblaadjes.be, 20 words each).

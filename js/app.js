@@ -773,7 +773,7 @@ async function instellingen() {
 
 // ---------- Help ----------
 
-// Short, child-friendly explanations. Each card can be read aloud by Ellen.
+// Short, child-friendly explanations.
 const HELP = [
   {
     icon: '✏️',
@@ -813,10 +813,7 @@ function help() {
     <div class="settings">
       ${HELP.map((part, i) => `
         <div class="card help-card" style="--i:${i}">
-          <div class="help-head">
-            <h2>${part.icon} ${escape(part.title)}</h2>
-            <button class="icon-btn" data-say="${i}" aria-label="Lees voor: ${escape(part.title)}">🔊</button>
-          </div>
+          <h2>${part.icon} ${escape(part.title)}</h2>
           <p>${escape(part.text.replace(/\s+/g, ' '))}</p>
         </div>`).join('')}
       <div class="card help-card">
@@ -827,9 +824,6 @@ function help() {
     </div>
   `);
   bindBack();
-  $$('[data-say]').forEach((btn) =>
-    btn.addEventListener('click', () => say(HELP[Number(btn.dataset.say)].text.replace(/\s+/g, ' '))),
-  );
 }
 
 // ---------- Sticker book ----------
@@ -896,7 +890,6 @@ function stickerboek(pageId) {
       <p>Na elk <b>dictee</b> en elke <b>rekenronde</b> krijg je een envelop met een sticker.
         Alles juist? Dan is je sticker een <b>glittersticker</b> ✨.
         Is een pagina vol, dan krijgt je eenhoorn een <b>verrassing</b>!</p>
-      <button class="icon-btn" id="explain-say" aria-label="Lees voor">🔊</button>
     </div>
     <div class="chips page-tabs" role="tablist"></div>
     <div class="card album-page">
@@ -933,7 +926,6 @@ function stickerboek(pageId) {
   }
 
   $('#to-wardrobe').addEventListener('click', () => go('aankleden'));
-  $('#explain-say').addEventListener('click', () => say($('.explain p').textContent.replace(/\s+/g, ' ')));
   showPage(startPage);
 }
 
