@@ -11,7 +11,7 @@ import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from './ui/stickers.js';
 import { award, isPageComplete, unlockedAccessories, toggleWorn } from './logic/stickerbook.js';
 import { loadBook, saveBook, resetBook } from './stickerStore.js';
 import {
-  currentProfile, setCurrent, addProfile, removeProfile, updateProfile, stickerKey,
+  currentProfile, setCurrent, updateProfile, stickerKey,
 } from './logic/profiles.js';
 import { loadProfiles, saveProfiles } from './profileStore.js';
 import { makeShapeQuestion, makeNameGame, COLOURS } from './logic/kleuter.js';
@@ -606,17 +606,39 @@ function chips(name, values, isOn, label = (v) => v) {
 
 const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
-async function instellingen() {
+/** What to call a child when no name is set yet. */
+const kidLabel = (p) => p.name.trim() || (p.kind === 'school' ? 'Schoolkind' : 'Kleuter');
+
+/**
+ * Instellingen: a tab per child with everything for that child, then the
+ * settings for everyone. Opens on the child who is playing.
+ */
+async function instellingen(kidId = profiles.current) {
+  const kid = profiles.profiles.find((p) => p.id === kidId) || child();
+  const kidBook = kid.id === child().id ? book : loadBook(stickerKey(kid.id));
+  const kidChip = (field, value, label) =>
+    `<button class="chip" data-field="${field}" data-value="${value}" aria-pressed="${kid[field] === value}">${label}</button>`;
   const id = render(`
     ${topbar('Instellingen')}
+    <div class="kid-tabs" role="tablist">
+      ${profiles.profiles.map((p) => `
+        <button class="kid-tab" role="tab" data-kid="${p.id}" aria-selected="${p.id === kid.id}">
+          <span class="avatar-mascot" data-palette="${p.palette}"></span>
+          <span class="kid-tab-name">${escape(kidLabel(p))}</span>
+        </button>`).join('')}
+    </div>
     <div class="settings">
+      <h2 class="section-title">Voor <span class="kid-title">${escape(kidLabel(kid))}</span></h2>
       <div class="card">
-        <h2>🦄 Kinderen</h2>
-        <p>Elk kind heeft een eigen eenhoorn en stickerboek. De app opent bij wie het laatst speelde;
-          wisselen doe je met de eenhoorntjes bovenaan. Namen blijven op dit toestel.</p>
-        <div class="kids">${profiles.profiles.map(kidCard).join('')}</div>
-        <button class="btn" id="add-kid">➕ Kind toevoegen</button>
+        <h2>🦄 Naam en eenhoorn</h2>
+        <p>Zo begroet de eenhoorn ${kid.kind === 'school' ? 'het schoolkind' : 'de kleuter'}. De naam blijft op dit toestel.</p>
+        <div class="field">
+          <input class="kid-name" type="text" maxlength="20" autocomplete="off" placeholder="Naam"
+            aria-label="Naam" value="${escape(kid.name)}">
+        </div>
+        <div class="chips">${kidChip('palette', 'roze', '🩷 Roze eenhoorn')}${kidChip('palette', 'paars', '💜 Paarse eenhoorn')}</div>
       </div>
+      ${kid.kind === 'school' ? `
       <div class="card">
         <h2>✏️ Woordpakketten</h2>
         <p>Deze pakketten kan je kiezen. “Gemengd” neemt woordjes uit al deze pakketten.</p>
@@ -632,13 +654,22 @@ async function instellingen() {
         ${chips('tables', range(1, 10), (v) => settings.math.tables.includes(v))}
         <p style="margin-top:16px">Aantal vragen</p>
         ${chips('count', [5, 10, 15, 20], (v) => settings.math.count === v)}
-      </div>
+      </div>` : `
       <div class="card">
-        <h2>📒 Stickerboek${child().name.trim() ? ` van ${escape(child().name.trim())}` : ''}</h2>
-        <p>${stickerCount()} van ${STICKER_PAGES.reduce((n, p) => n + p.stickers.length, 0)} stickers verzameld.
-          Wissen begint het stickerboek opnieuw; ook de verrassingen van de eenhoorn verdwijnen.</p>
+        <h2>🧸 Spelletjes</h2>
+        <p>Tellen tot</p>
+        <div class="chips">${kidChip('tellenMax', 5, '5')}${kidChip('tellenMax', 10, '10')}</div>
+        <p style="margin-top:16px">Memory</p>
+        <div class="chips">${kidChip('memoryCards', 6, '6 kaartjes')}${kidChip('memoryCards', 8, '8 kaartjes')}${kidChip('memoryCards', 12, '12 kaartjes')}</div>
+      </div>`}
+      <div class="card">
+        <h2>📒 Stickerboek</h2>
+        <p>${Object.keys(kidBook.stickers).length} van ${STICKER_PAGES.reduce((n, p) => n + p.stickers.length, 0)} stickers verzameld.
+          Wissen begint dit stickerboek opnieuw; ook de verrassingen van de eenhoorn verdwijnen.</p>
         <button class="btn" id="reset-stickers">🗑️ Stickerboek wissen</button>
       </div>
+
+      <h2 class="section-title">Voor iedereen</h2>
       <div class="card">
         <h2>🔔 Geluidjes</h2>
         <p>Een belletje bij een goed antwoord, een zachte toon bij een fout.</p>
@@ -672,7 +703,7 @@ async function instellingen() {
     </div>
   `);
   bindBack();
-  bindKids();
+  bindKidSettings(kid);
 
   const update = (change) => {
     change(settings);
@@ -748,11 +779,6 @@ async function instellingen() {
   $('#rate').addEventListener('input', (event) => update((s) => { s.rate = Number(event.target.value); }));
   $('#test-voice').addEventListener('click', () => say(`${greeting()} Het woord is: de regenboog.`));
   $('#to-record').addEventListener('click', () => go('inspreken'));
-  $('#reset-stickers').addEventListener('click', () => {
-    if (!window.confirm('Alle stickers en verrassingen van de eenhoorn wissen? Dit kan je niet ongedaan maken.')) return;
-    book = resetBook(bookKey());
-    instellingen();
-  });
   const backupStatus = (text) => { $('#backup-status').textContent = text; };
   const refreshCount = async () => {
     const total = allWordKeys();
@@ -814,7 +840,7 @@ function avatars() {
   if (profiles.profiles.length < 2) return '';
   return `<div class="avatars">${profiles.profiles
     .map((p) => `<button class="avatar" data-kid="${p.id}" aria-pressed="${p.id === profiles.current}"
-        aria-label="${escape(p.name.trim() || 'Kind')}"><span class="avatar-mascot" data-palette="${p.palette}"></span></button>`)
+        aria-label="${escape(kidLabel(p))}"><span class="avatar-mascot" data-palette="${p.palette}"></span></button>`)
     .join('')}</div>`;
 }
 
@@ -836,73 +862,45 @@ function bindAvatars() {
   );
 }
 
-function kidCard(p) {
-  const chip = (field, value, label) =>
-    `<button class="chip" data-field="${field}" data-value="${value}" aria-pressed="${p[field] === value}">${label}</button>`;
-  return `
-    <div class="kid" data-kid="${p.id}">
-      <div class="kid-head">
-        <span class="avatar-mascot kid-avatar" data-palette="${p.palette}"></span>
-        <input class="kid-name" type="text" maxlength="20" autocomplete="off" placeholder="Naam"
-          aria-label="Naam" value="${escape(p.name)}">
-        ${profiles.profiles.length > 1 ? '<button class="icon-btn kid-remove" aria-label="Kind verwijderen">🗑️</button>' : ''}
-      </div>
-      <div class="chips">${chip('kind', 'school', '🎒 Schoolkind')}${chip('kind', 'kleuter', '🧸 Kleuter')}</div>
-      <div class="chips">${chip('palette', 'roze', '🩷 Roze eenhoorn')}${chip('palette', 'paars', '💜 Paarse eenhoorn')}</div>
-      ${p.kind === 'kleuter' ? `
-        <p class="kid-label">Tellen tot</p>
-        <div class="chips">${chip('tellenMax', 5, '5')}${chip('tellenMax', 10, '10')}</div>
-        <p class="kid-label">Memory</p>
-        <div class="chips">${chip('memoryCards', 6, '6 kaartjes')}${chip('memoryCards', 8, '8 kaartjes')}${chip('memoryCards', 12, '12 kaartjes')}</div>` : ''}
-    </div>`;
-}
-
-function bindKids() {
-  const box = $('.kids');
-  const refresh = () => {
-    box.innerHTML = profiles.profiles.map(kidCard).join('');
-    mountAvatarMascots(box);
-  };
-  const change = (next) => {
-    profiles = next;
+/** Tabs, name, colour, games and sticker-book reset for the child shown in Instellingen. */
+function bindKidSettings(kid) {
+  mountAvatarMascots($('.kid-tabs'));
+  const save = (patch) => {
+    profiles = updateProfile(profiles, kid.id, patch);
     saveProfiles(profiles);
+    kid = profiles.profiles.find((p) => p.id === kid.id);
   };
-  refresh();
 
-  box.addEventListener('input', (event) => {
-    if (!event.target.matches('.kid-name')) return;
-    const id = event.target.closest('.kid').dataset.kid;
-    change(updateProfile(profiles, id, { name: event.target.value }));
+  $$('.kid-tab').forEach((tab) =>
+    tab.addEventListener('click', () => tab.dataset.kid !== kid.id && instellingen(tab.dataset.kid)),
+  );
+
+  $('.kid-name').addEventListener('input', (event) => {
+    save({ name: event.target.value });
+    $('.kid-title').textContent = kidLabel(kid);
+    $(`.kid-tab[data-kid="${kid.id}"] .kid-tab-name`).textContent = kidLabel(kid);
   });
 
-  box.addEventListener('click', (event) => {
-    const kid = event.target.closest('.kid');
-    if (!kid) return;
-    const id = kid.dataset.kid;
-    const chip = event.target.closest('.chip[data-field]');
-    if (chip) {
+  $$('.chip[data-field]').forEach((chip) =>
+    chip.addEventListener('click', () => {
+      const field = chip.dataset.field;
       const raw = chip.dataset.value;
-      const value = Number.isNaN(Number(raw)) ? raw : Number(raw);
-      change(updateProfile(profiles, id, { [chip.dataset.field]: value }));
-      refresh();
-      return;
-    }
-    if (event.target.closest('.kid-remove')) {
-      const name = profiles.profiles.find((p) => p.id === id)?.name.trim() || 'Dit kind';
-      if (!window.confirm(`${name} verwijderen? Ook het stickerboek van ${name} wordt gewist.`)) return;
-      resetBook(stickerKey(id));
-      change(removeProfile(profiles, id));
-      book = loadBook(bookKey());
-      // Redraw everything: the sticker-book card may now belong to another child.
-      instellingen();
-    }
-  });
+      save({ [field]: Number.isNaN(Number(raw)) ? raw : Number(raw) });
+      $$(`.chip[data-field="${field}"]`).forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      if (field === 'palette') {
+        const avatar = $(`.kid-tab[data-kid="${kid.id}"] .avatar-mascot`);
+        avatar.dataset.palette = kid.palette;
+        mountAvatarMascots($('.kid-tabs'));
+      }
+    }),
+  );
 
-  $('#add-kid').addEventListener('click', () => {
-    const added = addProfile(profiles);
-    change(added.state);
-    refresh();
-    box.querySelector(`[data-kid="${added.profile.id}"] .kid-name`)?.focus();
+  $('#reset-stickers').addEventListener('click', () => {
+    const name = kid.name.trim() || 'dit kind';
+    if (!window.confirm(`Het stickerboek van ${name} wissen? Dit kan je niet ongedaan maken.`)) return;
+    resetBook(stickerKey(kid.id));
+    if (kid.id === child().id) book = loadBook(bookKey());
+    instellingen(kid.id);
   });
 }
 

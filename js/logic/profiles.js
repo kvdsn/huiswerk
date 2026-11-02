@@ -1,48 +1,41 @@
-// Children using the app. Pure functions on a plain state object:
-//   state = { profiles: [profile], current: profileId }
+// The two children using the app. Pure functions on a plain state object:
+//   state = { profiles: [profile, profile], current: profileId }
 //   profile = { id, name, kind: 'school' | 'kleuter', palette: 'roze' | 'paars',
 //               tellenMax: 5 | 10, memoryCards: 6 | 8 | 12 }
-// The first child keeps the id 'p1', so her existing sticker book stays hers.
+// The family is fixed: 'p1' is the school child (she keeps the original
+// sticker book and name), 'p2' the toddler.
 
-const KINDS = ['school', 'kleuter'];
 const PALETTES = ['roze', 'paars'];
+const CHILDREN = [
+  { id: 'p1', kind: 'school', palette: 'roze' },
+  { id: 'p2', kind: 'kleuter', palette: 'paars' },
+];
 
-function makeProfile(id, { name = '', kind = 'school', palette } = {}) {
-  return {
-    id,
-    name,
-    kind,
-    palette: palette || (kind === 'kleuter' ? 'paars' : 'roze'),
-    tellenMax: 5,
-    memoryCards: 6,
-  };
+function makeProfile({ id, kind, palette }, name = '') {
+  return { id, name, kind, palette, tellenMax: 5, memoryCards: 6 };
 }
 
-/** One school child, named as in the old single-child settings. */
+/** Both children, the first named as in the old single-child settings. */
 export function defaultProfiles(legacyName = '') {
-  return { profiles: [makeProfile('p1', { name: legacyName })], current: 'p1' };
+  return { profiles: CHILDREN.map((c, i) => makeProfile(c, i === 0 ? legacyName : '')), current: 'p1' };
 }
 
-/** Makes stored data safe to use; falls back to one child. */
+/** Makes stored data safe to use: always the two children, in order. */
 export function cleanProfiles(stored, legacyName = '') {
   const list = Array.isArray(stored?.profiles) ? stored.profiles : [];
-  const seen = new Set();
-  const profiles = [];
-  for (const p of list) {
-    if (typeof p?.id !== 'string' || seen.has(p.id)) continue;
-    seen.add(p.id);
-    const kind = KINDS.includes(p.kind) ? p.kind : 'school';
-    profiles.push({
-      ...makeProfile(p.id, { kind }),
+  const profiles = CHILDREN.map((c, i) => {
+    const p = list.find((item) => item?.id === c.id);
+    if (!p) return makeProfile(c, i === 0 ? legacyName : '');
+    return {
+      ...makeProfile(c),
       name: typeof p.name === 'string' ? p.name : '',
-      // 'mint' was the first colour for a second child; it became 'paars'.
-      palette: p.palette === 'mint' ? 'paars' : PALETTES.includes(p.palette) ? p.palette : kind === 'kleuter' ? 'paars' : 'roze',
+      // 'mint' was the first colour for the second child; it became 'paars'.
+      palette: p.palette === 'mint' ? 'paars' : PALETTES.includes(p.palette) ? p.palette : c.palette,
       tellenMax: [5, 10].includes(p.tellenMax) ? p.tellenMax : 5,
       memoryCards: [6, 8, 12].includes(p.memoryCards) ? p.memoryCards : 6,
-    });
-  }
-  if (!profiles.length) return defaultProfiles(legacyName);
-  const current = profiles.some((p) => p.id === stored.current) ? stored.current : profiles[0].id;
+    };
+  });
+  const current = profiles.some((p) => p.id === stored?.current) ? stored.current : 'p1';
   return { profiles, current };
 }
 
@@ -54,34 +47,10 @@ export function setCurrent(state, id) {
   return state.profiles.some((p) => p.id === id) ? { ...state, current: id } : state;
 }
 
-/** Adds a child (a kleuter by default) and returns { state, profile }. */
-export function addProfile(state, { kind = 'kleuter', name = '' } = {}) {
-  const used = new Set(state.profiles.map((p) => p.id));
-  let n = 2;
-  while (used.has(`p${n}`)) n++;
-  const profile = makeProfile(`p${n}`, { kind, name });
-  return { state: { ...state, profiles: [...state.profiles, profile] }, profile };
-}
-
-/** Removes a child; the last one can't be removed. */
-export function removeProfile(state, id) {
-  if (state.profiles.length <= 1) return state;
-  const profiles = state.profiles.filter((p) => p.id !== id);
-  if (profiles.length === state.profiles.length) return state;
-  return { profiles, current: state.current === id ? profiles[0].id : state.current };
-}
-
+/** Changes a child's name, colour or game settings (not her id or kind). */
 export function updateProfile(state, id, patch) {
-  return {
-    ...state,
-    profiles: state.profiles.map((p) => {
-      if (p.id !== id) return p;
-      const next = { ...p, ...patch };
-      // A new kind gets that kind's default colours unless chosen in the same change.
-      if (patch.kind && patch.kind !== p.kind && !patch.palette) next.palette = patch.kind === 'kleuter' ? 'paars' : 'roze';
-      return next;
-    }),
-  };
+  const { id: _id, kind: _kind, ...allowed } = patch;
+  return { ...state, profiles: state.profiles.map((p) => (p.id === id ? { ...p, ...allowed } : p)) };
 }
 
 /** Where a child's sticker book is stored. The first child keeps the original key. */

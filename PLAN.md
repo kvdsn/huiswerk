@@ -17,9 +17,10 @@ The child writes the words on paper and says the math answers out loud.
 - Large touch targets and a large rounded font that is easy for a child to read. Built for the iPad in both portrait and landscape.
 
 ## Children (profiles)
-- Several children can use the app on one device. It opens on whoever played last; round unicorn avatars at the top of the home screen switch child in one tap (shown only with more than one child). No lock.
-- Each child has a name, a kind (schoolkind or kleuter), a unicorn colour (roze or paars) and an own sticker book. Managed in Instellingen → Kinderen (add, rename, remove with confirmation).
-- The first child keeps the original sticker book and the name from the old single-child setting.
+- Two fixed children: a schoolkind and a kleuter (no adding or removing). The app opens on whoever played last; two round unicorn avatars at the top of the home screen switch child in one tap. No lock.
+- Each child has a name, a unicorn colour (roze or paars) and an own sticker book.
+- Instellingen has a tab per child ("Voor <naam>": name and colour, then Woordpakketten and Rekenen for the schoolkind or Spelletjes for the kleuter, then that child's Stickerboek with its own reset), followed by "Voor iedereen" (Geluidjes, Stem, Eigen stem). It opens on the child who is playing.
+- The schoolkind keeps the original sticker book and the name from the old single-child setting.
 
 ## Toddler games (kleuter)
 - A kleuter's home screen shows Tellen, Memory and Stickerboek instead of Dictee and Rekenen. Ellen speaks every instruction (a four-year-old can't read yet). A wrong tap only gets a friendly "Probeer nog eens", without a sound.
