@@ -76,6 +76,7 @@ const MIC_TEXT = {
   idle: 'Even wachten…',
   denied: 'De microfoon mag niet. Gebruik de knoppen.',
   unavailable: 'Praten werkt hier niet (staat Dicteren aan?). Gebruik de knoppen.',
+  'dictation-off': 'Dicteren staat uit. Zet het aan: Instellingen → Algemeen → Toetsenbord → Dicteren.',
 };
 
 function micBadge() {

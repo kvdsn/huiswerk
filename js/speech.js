@@ -157,7 +157,7 @@ export function watchSpeechLog(fn) {
 }
 
 // Once the microphone (or speech service) is refused, stop asking until the
-// page is reloaded: 'denied' or 'unavailable'.
+// page is reloaded: 'denied', 'unavailable' or 'dictation-off'.
 let micBlocked = null;
 
 // Listeners that want to hear something (even if the microphone is blocked),
@@ -192,7 +192,7 @@ export function canListen() {
  * browser ends it on its own.
  *
  * onResult(alternatives: string[], isFinal: boolean)
- * onState('listening' | 'idle' | 'denied' | 'unavailable')
+ * onState('listening' | 'idle' | 'denied' | 'unavailable' | 'dictation-off')
  * interim: also report interim results (fast for short commands; off for
  * numbers, where "vijf" may still become "vijfentwintig").
  * continuous: keep one session open; off makes Safari deliver the final
@@ -272,7 +272,12 @@ export class Listener {
       log(`error: ${event.error}${event.message ? ` – ${event.message}` : ''}`);
       // not-allowed: no microphone permission. service-not-allowed: speech
       // recognition is off (on a Mac: Siri/Dictation disabled).
-      const blocked = { 'not-allowed': 'denied', 'service-not-allowed': 'unavailable' }[event.error];
+      // iPadOS reports "aborted – Siri and Dictation are disabled" when
+      // Dictation is off; retrying won't help.
+      const dictationOff = /dictation/i.test(event.message || '');
+      const blocked = dictationOff
+        ? 'dictation-off'
+        : { 'not-allowed': 'denied', 'service-not-allowed': 'unavailable' }[event.error];
       if (blocked) {
         micBlocked = blocked;
         this.active = false;
