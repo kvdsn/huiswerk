@@ -4,7 +4,7 @@
 //   const m = mountMascot(document.querySelector('#mascot'), { avatar: 'panda' });
 //   m.react('happy');      // jump + paw clap (~600 ms)
 //   m.react('encourage');  // gentle nod (~500 ms)
-//   m.wear(['regenboog', 'konijntje']); // accessories: regenboog, schelpenkroon, konijntje, planeet
+//   m.wear(['regenboog', 'teddybeer']); // accessories: regenboog, schelpenkroon, teddybeer, planeet
 //   m.avatar('vos');       // switch animal live (worn rewards stay)
 // The animals live in ./avatars/ (one file each, see ./avatars/CONTRACT.md);
 // the rewards and all reactions are shared and drawn around any avatar.
@@ -13,7 +13,10 @@ import { AVATARS } from './avatars/index.js';
 
 export { AVATARS };
 export const AVATAR_IDS = AVATARS.map((a) => a.id);
-export const MASCOT_ACCESSORIES = ['regenboog', 'schelpenkroon', 'konijntje', 'planeet'];
+export const MASCOT_ACCESSORIES = ['regenboog', 'schelpenkroon', 'teddybeer', 'planeet'];
+// Old reward ids that still show their replacement (saved data may hold them).
+const ACCESSORY_ALIASES = { konijntje: 'teddybeer' };
+const wornSet = (ids = []) => new Set(ids.map((id) => ACCESSORY_ALIASES[id] || id));
 const DEFAULT_AVATAR = 'eenhoorn';
 const BY_ID = new Map(AVATARS.map((a) => [a.id, a]));
 // the old colour palettes ('roze', 'paars', alias 'mint') were all unicorns
@@ -78,27 +81,32 @@ const REWARDS_BEHIND = `
 `;
 
 const REWARDS_FRONT = `
-  <!-- accessory: a little planet and stars circling the unicorn (behind the bunny) -->
+  <!-- accessory: a little planet and stars circling the unicorn (behind the teddy bear) -->
   <g class="acc acc-planeet">
     <g class="acc-orbit">
       ${orbitAt(214, PLANET)}${orbitAt(316, orbitStar(8))}${orbitAt(350, orbitStar(5.5))}${orbitAt(152, orbitStar(6.5))}
     </g>
   </g>
 
-  <!-- accessory: bunny friend, bottom right in front of the body -->
-  <g class="acc acc-konijntje">
-    <g transform="translate(182 159) scale(1.3)"><g class="acc-bunny">
-      <g class="acc-bunny-ear acc-bunny-ear-l"><ellipse cx="-6" cy="-24" rx="5" ry="12" transform="rotate(-12 -6 -24)" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/><ellipse cx="-6" cy="-23" rx="2.3" ry="8" transform="rotate(-12 -6 -23)" fill="#ffc6e2"/></g>
-      <g class="acc-bunny-ear acc-bunny-ear-r"><ellipse cx="6" cy="-24" rx="5" ry="12" transform="rotate(12 6 -24)" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/><ellipse cx="6" cy="-23" rx="2.3" ry="8" transform="rotate(12 6 -23)" fill="#ffc6e2"/></g>
-      <circle cx="13" cy="20" r="4.5" fill="#fff" stroke="#c79bd8" stroke-width="2"/>
-      <ellipse cx="0" cy="16" rx="14" ry="12" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/>
-      <ellipse cx="-8" cy="27" rx="6.5" ry="3.8" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2"/><ellipse cx="8" cy="27" rx="6.5" ry="3.8" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2"/>
-      <ellipse cx="-4.5" cy="13" rx="3" ry="4" fill="#fff" stroke="#c79bd8" stroke-width="1.6"/><ellipse cx="4.5" cy="13" rx="3" ry="4" fill="#fff" stroke="#c79bd8" stroke-width="1.6"/>
-      <circle cx="0" cy="-5" r="12.5" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/>
-      <ellipse cx="-7.5" cy="-1" rx="2.6" ry="1.6" fill="#ff7fae" opacity=".55"/><ellipse cx="7.5" cy="-1" rx="2.6" ry="1.6" fill="#ff7fae" opacity=".55"/>
-      <circle cx="-4.5" cy="-6" r="1.9" fill="#4a3266"/><circle cx="4.5" cy="-6" r="1.9" fill="#4a3266"/><circle cx="-3.9" cy="-6.7" r=".65" fill="#fff"/><circle cx="5.1" cy="-6.7" r=".65" fill="#fff"/>
-      <path d="M-1.4-3H1.4L0-1.6Z" fill="#ff7fae" stroke="#ff7fae" stroke-width="1" stroke-linejoin="round"/>
-      <path d="M-2.4-.6Q0 1.6 2.4-.6" fill="none" stroke="#4a3266" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- accessory: teddy bear friend, bottom right in front of the body -->
+  <g class="acc acc-teddybeer">
+    <g transform="translate(182 160) scale(1.3)"><g class="acc-teddy">
+      <ellipse cx="-12" cy="13" rx="4.5" ry="6.5" transform="rotate(25 -12 13)" fill="#f2c48d" stroke="#d29a62" stroke-width="2"/><ellipse cx="12" cy="13" rx="4.5" ry="6.5" transform="rotate(-25 12 13)" fill="#f2c48d" stroke="#d29a62" stroke-width="2"/>
+      <ellipse cx="0" cy="15" rx="13.5" ry="12" fill="#f2c48d" stroke="#d29a62" stroke-width="2.2"/>
+      <ellipse cx="0" cy="17" rx="7.5" ry="6.5" fill="#fbe3c4"/>
+      <ellipse cx="-8" cy="26" rx="6.5" ry="4.8" fill="#f2c48d" stroke="#d29a62" stroke-width="2"/><ellipse cx="8" cy="26" rx="6.5" ry="4.8" fill="#f2c48d" stroke="#d29a62" stroke-width="2"/>
+      <ellipse cx="-8" cy="26.5" rx="3" ry="2.2" fill="#fbe3c4"/><ellipse cx="8" cy="26.5" rx="3" ry="2.2" fill="#fbe3c4"/>
+      <g class="acc-teddy-head">
+        <circle cx="-9.5" cy="-17" r="5.2" fill="#f2c48d" stroke="#d29a62" stroke-width="2.2"/><circle cx="9.5" cy="-17" r="5.2" fill="#f2c48d" stroke="#d29a62" stroke-width="2.2"/>
+        <circle cx="-9.5" cy="-17" r="2.4" fill="#fbe3c4"/><circle cx="9.5" cy="-17" r="2.4" fill="#fbe3c4"/>
+        <circle cx="0" cy="-7" r="12.5" fill="#f2c48d" stroke="#d29a62" stroke-width="2.2"/>
+        <ellipse cx="0" cy="-2.5" rx="5.6" ry="4.2" fill="#fbe3c4"/>
+        <ellipse cx="-8" cy="-3" rx="2.6" ry="1.6" fill="#ff7fae" opacity=".55"/><ellipse cx="8" cy="-3" rx="2.6" ry="1.6" fill="#ff7fae" opacity=".55"/>
+        <circle cx="-4.6" cy="-8.5" r="1.9" fill="#4a3266"/><circle cx="4.6" cy="-8.5" r="1.9" fill="#4a3266"/><circle cx="-4" cy="-9.2" r=".65" fill="#fff"/><circle cx="5.2" cy="-9.2" r=".65" fill="#fff"/>
+        <ellipse cx="0" cy="-4" rx="1.9" ry="1.3" fill="#8a5a3c"/>
+        <path d="M-2.2-1.4Q0 .8 2.2-1.4" fill="none" stroke="#4a3266" stroke-width="1.2" stroke-linecap="round"/>
+      </g>
+      <g fill="#ff8fbf" stroke="#e86aa6" stroke-width="1.2" stroke-linejoin="round"><path d="M0 5.5L-6 2.5V8.5ZM0 5.5L6 2.5V8.5Z"/><circle cx="0" cy="5.5" r="1.8"/></g>
     </g></g>
   </g>
 `;
@@ -140,7 +148,7 @@ const capital = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 /** Full SVG markup as a string (no DOM needed): for review pages and tests. */
 export function mascotSVG({ avatar = DEFAULT_AVATAR, wear = [], uid = 'x' } = {}) {
   const a = findAvatar(avatar);
-  const on = new Set(wear);
+  const on = wornSet(wear);
   const inner = mascotInner(a, uid).replace(/class="acc acc-([a-z]+)"/g,
     (m, id) => (on.has(id) ? `class="acc acc-${id} is-worn"` : m));
   return `<svg class="mascot avatar-${a.id}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${capital(a.noun)}">${inner}</svg>`;
@@ -168,16 +176,15 @@ export const mascotCSS = `
 /* orbit around (100 96); each item turns back so it stays upright */
 .mascot .acc-orbit { transform-box: view-box; transform-origin: 100px 96px; }
 .mascot .acc-orbit-item { transform-box: fill-box; transform-origin: 50% 50%; }
-.mascot .acc-bunny,
-.mascot .acc-bunny-ear { transform-box: fill-box; transform-origin: 50% 100%; }
+.mascot .acc-teddy,
+.mascot .acc-teddy-head { transform-box: fill-box; transform-origin: 50% 100%; }
 
 @media (prefers-reduced-motion: no-preference) {
   .mascot .acc-rainbow { animation: mascot-shimmer 7s ease-in-out infinite; }
   .mascot .acc-orbit { animation: mascot-orbit 40s linear infinite; }
   .mascot .acc-orbit-item { animation: mascot-orbit 40s linear infinite reverse; }
-  .mascot .acc-bunny-ear-l { animation: mascot-ear-twitch 5.3s ease-in-out infinite; }
-  .mascot .acc-bunny-ear-r { animation: mascot-ear-twitch 7.1s ease-in-out 1.7s infinite reverse; }
-  .mascot.is-happy .acc-bunny { animation: mascot-hop 600ms ease-out; }
+  .mascot .acc-teddy-head { animation: mascot-head-tilt 6.5s ease-in-out infinite; }
+  .mascot.is-happy .acc-teddy { animation: mascot-hop 600ms ease-out; }
   .mascot { animation: mascot-bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
   .mascot .mascot-tail { animation: mascot-tail 3.2s ease-in-out infinite; }
   .mascot.is-blinking .mascot-eyes { animation: mascot-blink 160ms ease-in-out; }
@@ -226,11 +233,9 @@ export const mascotCSS = `
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-@keyframes mascot-ear-twitch {
-  0%, 88%, 100% { transform: rotate(0deg); }
-  91% { transform: rotate(-14deg); }
-  94% { transform: rotate(8deg); }
-  97% { transform: rotate(-4deg); }
+@keyframes mascot-head-tilt {
+  0%, 78%, 100% { transform: rotate(0deg); }
+  84%, 92% { transform: rotate(-10deg); }
 }
 @keyframes mascot-hop {
   0%, 100% { transform: translateY(0) scale(1, 1); }
@@ -293,7 +298,7 @@ export function mountMascot(container, { wear = [], avatar, palette } = {}) {
 
   function setWorn(ids = []) {
     worn = [...ids];
-    const on = new Set(ids);
+    const on = wornSet(ids);
     for (const id of MASCOT_ACCESSORIES) {
       el.querySelector(`.acc-${id}`)?.classList.toggle('is-worn', on.has(id));
     }

@@ -26,13 +26,13 @@ Leave out `placeholder: true` (only the temporary grey stand-ins have it).
   100 wide and 90 tall; ears/horns may reach up to y ≈ 8.
 - Stay inside x 30–170 so the shared rewards fit: the rainbow arcs behind
   (centre (100, 178), radius 86–116), the planet and stars orbiting on a
-  circle of radius 96 around (100, 96), and the bunny friend in front at
+  circle of radius 96 around (100, 96), and the teddy bear friend in front at
   the bottom right (x ≈ 160–200, y ≈ 120–200). A tail may go behind the
-  bunny.
+  teddy bear.
 
 ## Required groups
 
-`markup` is drawn after the rainbow and before the planet and bunny. It must
+`markup` is drawn after the rainbow and before the planet and teddy bear. It must
 contain these groups (extra classes and groups are fine):
 
 | class | contains | animation (shared CSS) |

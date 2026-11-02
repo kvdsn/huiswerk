@@ -400,7 +400,7 @@ export const STICKER_PAGES = [
 export const ACCESSORIES = [
   { id: 'regenboog', name: 'een regenboog', page: 'regenboog' },
   { id: 'schelpenkroon', name: 'de schelpenkroon', page: 'zee' },
-  { id: 'konijntje', name: 'een konijntje', page: 'dieren' },
+  { id: 'teddybeer', name: 'een teddybeer', page: 'dieren' },
   { id: 'planeet', name: 'een planeet met sterren', page: 'ruimte' },
 ];
 
@@ -427,13 +427,16 @@ export const ACCESSORY_ICONS = {
     + pearlAt(24, 66, 3.6) + pearlAt(37, 66.5, 4.2) + pearlAt(50, 67, 5) + pearlAt(63, 66.5, 4.2) + pearlAt(76, 66, 3.6)
     + '<ellipse cx="42" cy="34" rx="3.5" ry="2.4" transform="rotate(-40 42 34)" fill="#fff" opacity=".7"/>'),
 
-  konijntje: (() => {
-    const ears = '<ellipse cx="42" cy="23" rx="6.5" ry="14" transform="rotate(-12 42 23)"/><ellipse cx="58" cy="23" rx="6.5" ry="14" transform="rotate(12 58 23)"/>';
-    const body = '<circle cx="68" cy="76" r="6"/><ellipse cx="50" cy="73" rx="19" ry="15"/><ellipse cx="39" cy="86" rx="8.5" ry="5"/><ellipse cx="61" cy="86" rx="8.5" ry="5"/><circle cx="50" cy="46" r="17"/>';
-    return sticker(`${ears}${body}`,
-      `<g fill="#efe4fa">${ears}</g><ellipse cx="42" cy="24" rx="3" ry="9.5" transform="rotate(-12 42 24)" fill="#ffc0dc"/><ellipse cx="58" cy="24" rx="3" ry="9.5" transform="rotate(12 58 24)" fill="#ffc0dc"/>`
-      + `<g fill="#efe4fa">${body}</g><circle cx="68" cy="76" r="6" fill="#fff"/><ellipse cx="50" cy="75" rx="10" ry="8" fill="#fbf6ff"/>`
-      + `${face(50, 47, 0.8)}${nose(50, 50)}`);
+  teddybeer: (() => {
+    const ears = '<circle cx="33" cy="24" r="8.5"/><circle cx="67" cy="24" r="8.5"/>';
+    const arms = '<ellipse cx="31" cy="67" rx="6.5" ry="9" transform="rotate(25 31 67)"/><ellipse cx="69" cy="67" rx="6.5" ry="9" transform="rotate(-25 69 67)"/>';
+    const body = '<ellipse cx="50" cy="71" rx="19" ry="16"/><ellipse cx="38" cy="85" rx="9" ry="6.5"/><ellipse cx="62" cy="85" rx="9" ry="6.5"/><circle cx="50" cy="41" r="19"/>';
+    return sticker(`${ears}${arms}${body}`,
+      `<g fill="#f2c48d">${ears}${arms}${body}</g><g fill="#fbe3c4"><circle cx="33" cy="24" r="4"/><circle cx="67" cy="24" r="4"/><ellipse cx="50" cy="74" rx="10" ry="8.5"/><ellipse cx="38" cy="86" rx="4.5" ry="3.2"/><ellipse cx="62" cy="86" rx="4.5" ry="3.2"/><ellipse cx="50" cy="48" rx="8.5" ry="6.5"/></g>`
+      + '<ellipse cx="39" cy="47" rx="3.6" ry="2.2" fill="#ff7fae" opacity=".55"/><ellipse cx="61" cy="47" rx="3.6" ry="2.2" fill="#ff7fae" opacity=".55"/>'
+      + '<circle cx="43" cy="39" r="2.6" fill="#4a3266"/><circle cx="57" cy="39" r="2.6" fill="#4a3266"/><circle cx="43.9" cy="38" r=".9" fill="#fff"/><circle cx="57.9" cy="38" r=".9" fill="#fff"/>'
+      + '<ellipse cx="50" cy="45.5" rx="3" ry="2.1" fill="#8a5a3c"/><path d="M47 49.5Q50 52 53 49.5" fill="none" stroke="#4a3266" stroke-width="1.7" stroke-linecap="round"/>'
+      + '<g fill="#ff8fbf" stroke="#ff8fbf" stroke-width="1.5" stroke-linejoin="round"><path d="M50 60L41 55.5V64.5ZM50 60L59 55.5V64.5Z"/></g><circle cx="50" cy="60" r="2.8" fill="#ff6fae"/>');
   })(),
 
   planeet: sticker(

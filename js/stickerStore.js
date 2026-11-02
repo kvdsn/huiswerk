@@ -4,7 +4,8 @@
 import { STICKER_PAGES, ACCESSORIES } from './ui/stickers.js';
 import { emptyBook, cleanBook, carryOverPage } from './logic/stickerbook.js';
 
-const OLD_ACCESSORY_PAGES = { kroon: 'regenboog', bril: 'zee', strik: 'dieren', vleugels: 'ruimte' };
+// Rewards that were replaced, and the page whose reward takes their place.
+const OLD_ACCESSORY_PAGES = { kroon: 'regenboog', bril: 'zee', strik: 'dieren', vleugels: 'ruimte', konijntje: 'dieren' };
 
 export function loadBook(key) {
   try {
