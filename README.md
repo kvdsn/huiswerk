@@ -12,6 +12,8 @@ python3 -m http.server 8765
 
 Open <http://localhost:8765> in Safari. Speech recognition needs Siri/Dictation to be enabled on the Mac, and the first time Safari asks for microphone access.
 
+On the iPad, speech recognition needs **both Siri and Dictation** turned on (Instellingen → Siri, and Algemeen → Toetsenbord → Dicteren); otherwise iPadOS aborts with "Siri and Dictation are disabled". Tapping the microphone badge in the app shows what the recogniser reports.
+
 For a Flemish voice: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → Dutch (Belgium).
 
 On localhost you can pretend the child said something from the browser console:

@@ -727,6 +727,7 @@ async function inspreken(packageId) {
   let words = [];
   let index = 0;
   let take = null; // The recording in progress.
+  let starting = false; // Waiting for the microphone to open.
   let step = 0; // Bumped on every navigation; stale playbacks must not advance.
 
   const word = () => words[index];
@@ -805,21 +806,26 @@ async function inspreken(packageId) {
       return;
     }
 
-    // Start recording.
+    // Start recording. Ignore taps while the microphone is still opening.
+    if (starting) return;
+    starting = true;
     step++;
     stopPlayback();
+    let started;
     try {
-      await recorder.open();
+      started = await recorder.record({ maxMs: 6000 });
     } catch {
       return status('De microfoon mag niet. Sta de microfoon toe in de instellingen van Safari.');
+    } finally {
+      starting = false;
     }
-    if (!isCurrent(id)) return;
-    take = recorder.record({ maxMs: 6000 });
+    if (!isCurrent(id)) return started.stop();
+    take = started;
     button.textContent = '⏹️ Stop';
     button.classList.add('recording');
     status('Spreek het woord in…');
     // Auto-stop after 6 seconds also saves.
-    take.done.then(() => take && isCurrent(id) && toggle());
+    started.done.then(() => take === started && isCurrent(id) && toggle());
   }
 
   $('#rec-packages').addEventListener('click', (event) => {

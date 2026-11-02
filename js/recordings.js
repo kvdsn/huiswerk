@@ -123,26 +123,32 @@ function pickMimeType() {
 }
 
 /**
- * Microphone session for the recording screen. open() asks for permission
- * once; record() returns a handle whose stop() resolves with the audio Blob.
+ * Microphone for the recording screen. Every take opens its own microphone
+ * stream and closes it afterwards: on iPadOS, playing the previous take back
+ * silently cuts off a stream that stays open, and the next take comes out
+ * empty. record() resolves with a handle whose stop() resolves with the Blob.
  */
 export class Recorder {
-  async open() {
-    if (this.stream) return;
-    this.stream = await navigator.mediaDevices.getUserMedia({
+  async record({ maxMs = 6000 } = {}) {
+    this.close();
+    const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
-  }
-
-  record({ maxMs = 6000 } = {}) {
+    this.stream = stream;
     const mimeType = pickMimeType();
-    const recorder = new MediaRecorder(this.stream, mimeType ? { mimeType } : undefined);
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     const chunks = [];
     recorder.ondataavailable = (event) => event.data.size && chunks.push(event.data);
     const done = new Promise((resolve) => {
-      recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || mimeType }));
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        if (this.stream === stream) this.stream = null;
+        resolve(new Blob(chunks, { type: recorder.mimeType || mimeType }));
+      };
     });
-    recorder.start();
+    // Deliver data every quarter second, so a take is never lost to a single
+    // final chunk that iPadOS doesn't send.
+    recorder.start(250);
     const limit = setTimeout(() => recorder.state === 'recording' && recorder.stop(), maxMs);
     return {
       done,
