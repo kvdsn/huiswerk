@@ -16,6 +16,17 @@ The child writes the words on paper and says the math answers out loud.
 - Animations are quick and smooth, at 150–400 ms: screens slide or fade in, buttons bounce when tapped, and the mascot reacts. Nothing makes the child wait. Animations respect the iPad's "Reduce Motion" setting.
 - Large touch targets and a large rounded font that is easy for a child to read. Built for the iPad in both portrait and landscape.
 
+## Children (profiles)
+- Several children can use the app on one device. It opens on whoever played last; round unicorn avatars at the top of the home screen switch child in one tap (shown only with more than one child). No lock.
+- Each child has a name, a kind (schoolkind or kleuter), a unicorn colour (roze or mint) and an own sticker book. Managed in Instellingen → Kinderen (add, rename, remove with confirmation).
+- The first child keeps the original sticker book and the name from the old single-child setting.
+
+## Toddler games (kleuter)
+- A kleuter's home screen shows Tellen, Memory and Stickerboek instead of Dictee and Rekenen. Ellen speaks every instruction (a four-year-old can't read yet). A wrong tap only gets a friendly "Probeer nog eens", without a sound.
+- **Tellen:** 5 questions. Up to 5 or 10 copies of a sticker ("Hoeveel zie je er?"), with three big answer buttons showing the number and dots. Tapping the pictures counts along out loud with a number badge.
+- **Memory:** 6, 8 or 12 cards with sticker pictures; Ellen names each card when it's turned over.
+- Each finished game earns a sticker (glitter for Tellen without mistakes, or Memory with few misses).
+
 ## Help
 - A ❓ button on the home screen opens "Hoe werkt het?": short child-friendly cards for Dictee, Rekenen, talking to the app, and Stickers, plus a card for parents about Instellingen.
 - The sticker book starts with a short explanation of how to earn stickers.

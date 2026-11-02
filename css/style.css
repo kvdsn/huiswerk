@@ -441,6 +441,140 @@ button {
   font-weight: 700;
 }
 
+/* ---------- Children ---------- */
+
+.topbar-middle { flex: 1; display: flex; justify-content: center; }
+.avatars { display: flex; gap: 10px; }
+.avatar {
+  width: 56px;
+  height: 56px;
+  padding: 4px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: var(--shadow);
+  opacity: 0.6;
+  transition: transform var(--fast) var(--bounce), opacity var(--fast);
+}
+.avatar:active { transform: scale(0.9); }
+.avatar[aria-pressed='true'] { opacity: 1; outline: 3px solid var(--lilac-deep); }
+.avatar-mascot { display: block; width: 100%; height: 100%; }
+.avatar-mascot svg { width: 100%; height: 100%; display: block; }
+
+.kids { display: grid; gap: 14px; margin-bottom: 14px; }
+.kid { display: grid; gap: 10px; padding: 14px; border-radius: 20px; background: rgba(245, 243, 255, 0.8); }
+.kid-head { display: flex; align-items: center; gap: 12px; }
+.kid-avatar { width: 52px; height: 52px; flex: none; }
+.kid-name {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: 2px solid var(--lilac);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  background: white;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.kid-name:focus { outline: none; border-color: var(--lilac-deep); }
+.settings .kid-label { margin: 4px 0 0; }
+
+/* ---------- Toddler games ---------- */
+
+.game { gap: 16px; }
+.game .lead { margin: 0; }
+.steps { display: flex; gap: 10px; }
+.steps span { width: 16px; height: 16px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); box-shadow: inset 0 0 0 2px var(--lilac); }
+.steps span.done { background: var(--lilac-deep); box-shadow: none; }
+
+.count-field {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: min(640px, 100%);
+  min-height: 120px;
+}
+.count-item {
+  position: relative;
+  width: clamp(72px, 13vw, 104px);
+  aspect-ratio: 1;
+  padding: 0;
+  background: none;
+  animation: pop-in var(--medium) var(--bounce) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.count-item svg { width: 100%; height: 100%; display: block; }
+.count-item.counted { animation: count-bounce 320ms var(--bounce); }
+.count-item.counted::after {
+  content: attr(data-count);
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lilac-deep);
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+}
+@keyframes count-bounce {
+  50% { transform: scale(1.15) rotate(-6deg); }
+}
+
+.answers { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.answer {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: clamp(110px, 20vw, 150px);
+  padding: 14px 10px;
+  border-radius: 26px;
+  background: white;
+  box-shadow: var(--shadow), inset 0 -5px 0 rgba(139, 92, 246, 0.15);
+  transition: transform var(--fast) var(--bounce), opacity var(--fast), background var(--fast);
+}
+.answer:active { transform: scale(0.93); }
+.answer b { font-size: 52px; line-height: 1; }
+.answer .dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 90px; }
+.answer .dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--pink); }
+.answer.nope { opacity: 0.35; transform: scale(0.92); }
+.answer.right { background: #dcfce7; animation: count-bounce 400ms var(--bounce); }
+
+.memory-grid { display: grid; gap: clamp(10px, 2.5vw, 18px); width: min(640px, 100%); }
+.memory-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(520px, 100%); }
+.memory-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.mcard { aspect-ratio: 1; padding: 0; background: none; perspective: 600px; }
+.mcard-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 320ms var(--bounce);
+}
+.mcard.open .mcard-inner { transform: rotateY(180deg); }
+.mcard-back, .mcard-front {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  box-shadow: var(--shadow);
+}
+.mcard-back { background: linear-gradient(135deg, var(--pink), var(--lilac)); font-size: 40px; }
+.mcard-front { background: white; transform: rotateY(180deg); padding: 8%; }
+.mcard-front svg { width: 100%; height: 100%; }
+.mcard.matched .mcard-front { background: #dcfce7; }
+
 /* ---------- Help ---------- */
 
 .settings .help-card p { font-size: 20px; line-height: 1.5; color: var(--ink); margin: 0; }

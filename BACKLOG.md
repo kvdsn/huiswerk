@@ -9,7 +9,7 @@ Ideas for later, roughly in order of usefulness. See [PLAN.md](PLAN.md) for what
 - **Short sentences in dictations** — the parent records short sentences with the existing recording feature, and they're dictated like words.
 - **Tafels challenge** — a playful round on one times table, with the mascot cheering more for every right answer in a row. Optional timer.
 - **Number splitting and counting** — "Hoeveel tientallen en eenheden zijn er in 56?", "Wat komt na 79?", counting on/back and by 2, 5 or 10.
-- **More than one child** — separate name, packages and tricky-word list per child on the same device.
+- **More toddler games** — Kleuren en vormen ("Tik op de gele ster"), Wie zegt wat? (animal names and sounds), Mijn naam (letters of her own name).
 
 ## Decided against
 - **Checking handwriting from a photo** — unreliable with a young child's handwriting, and it would send photos to an online service.

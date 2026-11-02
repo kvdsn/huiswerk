@@ -1,14 +1,14 @@
-// The sticker book, stored on this device only.
+// Each child's sticker book, stored on this device only. `key` comes from
+// stickerKey() in logic/profiles.js.
 
 import { STICKER_PAGES, ACCESSORIES } from './ui/stickers.js';
 import { emptyBook, cleanBook, carryOverPage } from './logic/stickerbook.js';
 
-const KEY = 'huiswerk.stickers.v1';
 const OLD_ACCESSORY_PAGES = { kroon: 'regenboog', bril: 'zee', strik: 'dieren', vleugels: 'ruimte' };
 
-export function loadBook() {
+export function loadBook(key) {
   try {
-    let stored = JSON.parse(localStorage.getItem(KEY) || 'null');
+    let stored = JSON.parse(localStorage.getItem(key) || 'null');
     // The Snoep page became Zee: keep the stickers already earned there.
     stored = carryOverPage(stored, 'snoep', STICKER_PAGES.find((p) => p.id === 'zee'));
     // The first accessories were replaced by one themed reward per page:
@@ -25,17 +25,17 @@ export function loadBook() {
   }
 }
 
-export function saveBook(book) {
+export function saveBook(book, key) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(book));
+    localStorage.setItem(key, JSON.stringify(book));
   } catch {
     // Storage blocked: the sticker just won't be remembered.
   }
 }
 
-export function resetBook() {
+export function resetBook(key) {
   try {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem(key);
   } catch {
     // Nothing stored.
   }

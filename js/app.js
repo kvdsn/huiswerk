@@ -3,7 +3,7 @@ import {
   speak, stopSpeaking, flemishVoiceInfo, preloadVoices, Listener, canListen, simulateSpeech, speechDiagnostics, watchSpeechLog,
 } from './speech.js';
 import { matchCommandInAlternatives } from './logic/commands.js';
-import { buildRound, displayForm, spokenForm } from './logic/words.js';
+import { buildRound, displayForm, spokenForm, shuffle } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
 import { mountMascot } from './ui/mascot.js';
 import { playCorrect, playWrong } from './ui/sounds.js';
@@ -11,13 +11,27 @@ import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from './ui/stickers.js';
 import { award, isPageComplete, unlockedAccessories, toggleWorn } from './logic/stickerbook.js';
 import { loadBook, saveBook, resetBook } from './stickerStore.js';
 import {
+  currentProfile, setCurrent, addProfile, removeProfile, updateProfile, stickerKey,
+} from './logic/profiles.js';
+import { loadProfiles, saveProfiles } from './profileStore.js';
+import {
   recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
   exportRecordings, importRecordings, saveFile,
 } from './recordings.js';
 
 const app = document.getElementById('app');
 let settings = loadSettings();
-let book = loadBook();
+// The children using the app; the app opens on whoever played last.
+let profiles = loadProfiles(settings.name);
+const child = () => currentProfile(profiles);
+const bookKey = () => stickerKey(child().id);
+let book = loadBook(bookKey());
+
+function switchChild(id) {
+  profiles = setCurrent(profiles, id);
+  saveProfiles(profiles);
+  book = loadBook(bookKey());
+}
 let pakketten = {};
 
 // Everything started by a screen (listeners, timers) is cleaned up on navigation.
@@ -53,12 +67,12 @@ const say = (text) => speak(text, { voiceURI: settings.voiceURI, rate: settings.
 const soundCorrect = () => settings.sounds && playCorrect();
 const soundWrong = () => settings.sounds && playWrong();
 
-// "Hoi <naam>!" — the name is set in Instellingen and only stored on the device.
-const greeting = () => (settings.name.trim() ? `Hoi ${settings.name.trim()}!` : 'Hoi!');
+// "Hoi <naam>!" — names are set in Instellingen and only stored on the device.
+const greeting = () => (child().name.trim() ? `Hoi ${child().name.trim()}!` : 'Hoi!');
 
 function mascot(selector = '.mascot-wrap') {
   const el = $(selector);
-  return el ? mountMascot(el, { wear: book.worn }) : { react() {}, wear() {} };
+  return el ? mountMascot(el, { wear: book.worn, palette: child().palette }) : { react() {}, wear() {} };
 }
 
 function topbar(title, back = 'home') {
@@ -77,7 +91,7 @@ function bindBack() {
 }
 
 function go(name, ...args) {
-  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help };
+  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help, tellen, memory };
   (screens[name] || home)(...args);
 }
 
@@ -122,23 +136,32 @@ function setMic(state) {
 // ---------- Home ----------
 
 function home() {
+  const kleuter = child().kind === 'kleuter';
+  const tiles = kleuter
+    ? `<button class="tile sun" id="to-tellen" style="--i:0">
+          <span class="emoji">🐠</span>Tellen<small>Hoeveel zie je er?</small>
+        </button>
+        <button class="tile blue" id="to-memory" style="--i:1">
+          <span class="emoji">🃏</span>Memory<small>Zoek de twee dezelfde</small>
+        </button>`
+    : `<button class="tile pink" id="to-dictee" style="--i:0">
+          <span class="emoji">✏️</span>Dictee<small>Woordjes schrijven</small>
+        </button>
+        <button class="tile mint" id="to-rekenen" style="--i:1">
+          <span class="emoji">🔢</span>Rekenen<small>Sommen zeggen</small>
+        </button>`;
   render(`
     <header class="topbar">
       <button class="icon-btn" id="to-help" aria-label="Hoe werkt het?">❓</button>
-      <h1></h1>
+      <div class="topbar-middle">${avatars()}</div>
       <button class="icon-btn" id="to-settings" aria-label="Instellingen">⚙️</button>
     </header>
     <div class="center">
       <div class="mascot-wrap"></div>
       <h2 class="hello rainbow-text">${escape(greeting())}</h2>
-      <p class="lead">Wat gaan we vandaag oefenen?</p>
+      <p class="lead">${kleuter ? 'Wat gaan we spelen?' : 'Wat gaan we vandaag oefenen?'}</p>
       <div class="menu">
-        <button class="tile pink" id="to-dictee" style="--i:0">
-          <span class="emoji">✏️</span>Dictee<small>Woordjes schrijven</small>
-        </button>
-        <button class="tile mint" id="to-rekenen" style="--i:1">
-          <span class="emoji">🔢</span>Rekenen<small>Sommen zeggen</small>
-        </button>
+        ${tiles}
         <button class="tile lilac wide-tile" id="to-stickers" style="--i:2">
           <span class="emoji">📒</span>Stickerboek<small>${stickerCount()} stickers verzameld</small>
         </button>
@@ -146,8 +169,11 @@ function home() {
     </div>
   `);
   mascot();
-  $('#to-dictee').addEventListener('click', () => go('dicteeKies'));
-  $('#to-rekenen').addEventListener('click', () => go('rekenenStart'));
+  bindAvatars();
+  $('#to-dictee')?.addEventListener('click', () => go('dicteeKies'));
+  $('#to-rekenen')?.addEventListener('click', () => go('rekenenStart'));
+  $('#to-tellen')?.addEventListener('click', () => go('tellen'));
+  $('#to-memory')?.addEventListener('click', () => go('memory'));
   $('#to-stickers').addEventListener('click', () => go('stickerboek'));
   $('#to-settings').addEventListener('click', () => go('instellingen'));
   $('#to-help').addEventListener('click', () => go('help'));
@@ -575,11 +601,11 @@ async function instellingen() {
     ${topbar('Instellingen')}
     <div class="settings">
       <div class="card">
-        <h2>🦄 Naam</h2>
-        <p>Zo begroet de eenhoorn je. De naam blijft op dit toestel.</p>
-        <div class="field">
-          <input id="name" type="text" maxlength="20" autocomplete="off" aria-label="Naam" value="${escape(settings.name)}">
-        </div>
+        <h2>🦄 Kinderen</h2>
+        <p>Elk kind heeft een eigen eenhoorn en stickerboek. De app opent bij wie het laatst speelde;
+          wisselen doe je met de eenhoorntjes bovenaan. Namen blijven op dit toestel.</p>
+        <div class="kids">${profiles.profiles.map(kidCard).join('')}</div>
+        <button class="btn" id="add-kid">➕ Kind toevoegen</button>
       </div>
       <div class="card">
         <h2>✏️ Woordpakketten</h2>
@@ -598,7 +624,7 @@ async function instellingen() {
         ${chips('count', [5, 10, 15, 20], (v) => settings.math.count === v)}
       </div>
       <div class="card">
-        <h2>📒 Stickerboek</h2>
+        <h2>📒 Stickerboek${child().name.trim() ? ` van ${escape(child().name.trim())}` : ''}</h2>
         <p>${stickerCount()} van ${STICKER_PAGES.reduce((n, p) => n + p.stickers.length, 0)} stickers verzameld.
           Wissen begint het stickerboek opnieuw; ook de verrassingen van de eenhoorn verdwijnen.</p>
         <button class="btn" id="reset-stickers">🗑️ Stickerboek wissen</button>
@@ -636,6 +662,7 @@ async function instellingen() {
     </div>
   `);
   bindBack();
+  bindKids();
 
   const update = (change) => {
     change(settings);
@@ -644,7 +671,7 @@ async function instellingen() {
 
   const toggleIn = (list, value) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value].sort((a, b) => a - b));
 
-  $$('.chips').forEach((group) => {
+  $$('.chips[data-group]').forEach((group) => {
     group.addEventListener('click', (event) => {
       const chip = event.target.closest('.chip');
       if (!chip) return;
@@ -707,14 +734,13 @@ async function instellingen() {
       ? note('💡 Tip: download de “verbeterde” versie van Ellen. Die klinkt veel natuurlijker.')
       : '';
 
-  $('#name').addEventListener('input', (event) => update((s) => { s.name = event.target.value; }));
   select.addEventListener('change', () => update((s) => { s.voiceURI = select.value; }));
   $('#rate').addEventListener('input', (event) => update((s) => { s.rate = Number(event.target.value); }));
   $('#test-voice').addEventListener('click', () => say(`${greeting()} Het woord is: de regenboog.`));
   $('#to-record').addEventListener('click', () => go('inspreken'));
   $('#reset-stickers').addEventListener('click', () => {
     if (!window.confirm('Alle stickers en verrassingen van de eenhoorn wissen? Dit kan je niet ongedaan maken.')) return;
-    book = resetBook();
+    book = resetBook(bookKey());
     instellingen();
   });
   const backupStatus = (text) => { $('#backup-status').textContent = text; };
@@ -769,6 +795,283 @@ async function instellingen() {
   });
 
   refreshCount();
+}
+
+// ---------- Children ----------
+
+/** Round unicorn buttons to switch child (only when there is more than one). */
+function avatars() {
+  if (profiles.profiles.length < 2) return '';
+  return `<div class="avatars">${profiles.profiles
+    .map((p) => `<button class="avatar" data-kid="${p.id}" aria-pressed="${p.id === profiles.current}"
+        aria-label="${escape(p.name.trim() || 'Kind')}"><span class="avatar-mascot" data-palette="${p.palette}"></span></button>`)
+    .join('')}</div>`;
+}
+
+function mountAvatarMascots(root = app) {
+  root.querySelectorAll('.avatar-mascot').forEach((el) => {
+    el.innerHTML = '';
+    mountMascot(el, { palette: el.dataset.palette });
+  });
+}
+
+function bindAvatars() {
+  mountAvatarMascots();
+  $$('.avatar').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      if (btn.dataset.kid === profiles.current) return;
+      switchChild(btn.dataset.kid);
+      home();
+    }),
+  );
+}
+
+function kidCard(p) {
+  const chip = (field, value, label) =>
+    `<button class="chip" data-field="${field}" data-value="${value}" aria-pressed="${p[field] === value}">${label}</button>`;
+  return `
+    <div class="kid" data-kid="${p.id}">
+      <div class="kid-head">
+        <span class="avatar-mascot kid-avatar" data-palette="${p.palette}"></span>
+        <input class="kid-name" type="text" maxlength="20" autocomplete="off" placeholder="Naam"
+          aria-label="Naam" value="${escape(p.name)}">
+        ${profiles.profiles.length > 1 ? '<button class="icon-btn kid-remove" aria-label="Kind verwijderen">🗑️</button>' : ''}
+      </div>
+      <div class="chips">${chip('kind', 'school', '🎒 Schoolkind')}${chip('kind', 'kleuter', '🧸 Kleuter')}</div>
+      <div class="chips">${chip('palette', 'roze', '🩷 Roze eenhoorn')}${chip('palette', 'mint', '🩵 Mint eenhoorn')}</div>
+      ${p.kind === 'kleuter' ? `
+        <p class="kid-label">Tellen tot</p>
+        <div class="chips">${chip('tellenMax', 5, '5')}${chip('tellenMax', 10, '10')}</div>
+        <p class="kid-label">Memory</p>
+        <div class="chips">${chip('memoryCards', 6, '6 kaartjes')}${chip('memoryCards', 8, '8 kaartjes')}${chip('memoryCards', 12, '12 kaartjes')}</div>` : ''}
+    </div>`;
+}
+
+function bindKids() {
+  const box = $('.kids');
+  const refresh = () => {
+    box.innerHTML = profiles.profiles.map(kidCard).join('');
+    mountAvatarMascots(box);
+  };
+  const change = (next) => {
+    profiles = next;
+    saveProfiles(profiles);
+  };
+  refresh();
+
+  box.addEventListener('input', (event) => {
+    if (!event.target.matches('.kid-name')) return;
+    const id = event.target.closest('.kid').dataset.kid;
+    change(updateProfile(profiles, id, { name: event.target.value }));
+  });
+
+  box.addEventListener('click', (event) => {
+    const kid = event.target.closest('.kid');
+    if (!kid) return;
+    const id = kid.dataset.kid;
+    const chip = event.target.closest('.chip[data-field]');
+    if (chip) {
+      const raw = chip.dataset.value;
+      const value = Number.isNaN(Number(raw)) ? raw : Number(raw);
+      change(updateProfile(profiles, id, { [chip.dataset.field]: value }));
+      refresh();
+      return;
+    }
+    if (event.target.closest('.kid-remove')) {
+      const name = profiles.profiles.find((p) => p.id === id)?.name.trim() || 'Dit kind';
+      if (!window.confirm(`${name} verwijderen? Ook het stickerboek van ${name} wordt gewist.`)) return;
+      resetBook(stickerKey(id));
+      change(removeProfile(profiles, id));
+      book = loadBook(bookKey());
+      // Redraw everything: the sticker-book card may now belong to another child.
+      instellingen();
+    }
+  });
+
+  $('#add-kid').addEventListener('click', () => {
+    const added = addProfile(profiles);
+    change(added.state);
+    refresh();
+    box.querySelector(`[data-kid="${added.profile.id}"] .kid-name`)?.focus();
+  });
+}
+
+// ---------- Toddler games ----------
+
+const NUMBER_WORDS = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];
+const allStickers = () => STICKER_PAGES.flatMap((page) => page.stickers);
+const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
+
+/** Three different answers around n, within 1..max, in random order. */
+function countOptions(n, max) {
+  const options = new Set([n]);
+  for (const delta of shuffle([-2, -1, 1, 2])) {
+    if (options.size === 3) break;
+    if (n + delta >= 1 && n + delta <= max) options.add(n + delta);
+  }
+  for (let k = 1; options.size < 3 && k <= max; k++) options.add(k);
+  return shuffle([...options]);
+}
+
+function tellen() {
+  const QUESTIONS = 5;
+  const max = child().tellenMax;
+  const id = render(`
+    ${topbar('Tellen')}
+    <div class="center game">
+      <div class="steps">${'<span></span>'.repeat(QUESTIONS)}</div>
+      <div class="mascot-wrap small"></div>
+      <p class="lead">Hoeveel zie je er?</p>
+      <div class="count-field"></div>
+      <div class="answers"></div>
+      <p class="hint">Tik op de plaatjes om mee te tellen.</p>
+    </div>
+  `);
+  bindBack();
+  const m = mascot();
+  let index = 0;
+  let perfect = true;
+  let previous = 0;
+
+  function ask() {
+    let n;
+    do n = 1 + Math.floor(Math.random() * max);
+    while (n === previous && max > 1);
+    previous = n;
+    const sticker = pickOne(allStickers());
+    let counted = 0;
+    let busy = false;
+    $$('.steps span').forEach((dot, i) => dot.classList.toggle('done', i < index));
+    $('.count-field').innerHTML = Array.from({ length: n }, (_, i) =>
+      `<button class="count-item" style="--i:${i}" aria-label="Plaatje ${i + 1}">${sticker.svg}</button>`).join('');
+    $('.answers').innerHTML = countOptions(n, max)
+      .map((k) => `<button class="answer" data-n="${k}"><b>${k}</b><span class="dots">${'<i></i>'.repeat(k)}</span></button>`)
+      .join('');
+    say('Hoeveel zie je er?');
+
+    $$('.count-item').forEach((item) =>
+      item.addEventListener('click', () => {
+        if (busy || item.dataset.count) return;
+        counted++;
+        item.dataset.count = counted;
+        item.classList.add('counted');
+        say(NUMBER_WORDS[counted]);
+      }),
+    );
+    $$('.answer').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        if (busy || btn.disabled) return;
+        const k = Number(btn.dataset.n);
+        if (k !== n) {
+          perfect = false;
+          btn.disabled = true;
+          btn.classList.add('nope');
+          m.react('encourage');
+          say('Probeer nog eens. Tel maar mee!');
+          return;
+        }
+        busy = true;
+        btn.classList.add('right');
+        soundCorrect();
+        m.react('happy');
+        await say(n === 1 ? 'Ja! Er is er één.' : `Ja! Het zijn er ${NUMBER_WORDS[n]}.`);
+        await wait(300);
+        if (!isCurrent(id)) return;
+        index++;
+        if (index >= QUESTIONS) kleuterResultaat('tellen', perfect);
+        else ask();
+      }),
+    );
+  }
+  ask();
+}
+
+function memory() {
+  const cards = child().memoryCards;
+  const pairs = cards / 2;
+  const deck = shuffle(shuffle(allStickers()).slice(0, pairs).flatMap((s) => [s, s]));
+  const id = render(`
+    ${topbar('Memory')}
+    <div class="center game">
+      <div class="mascot-wrap small"></div>
+      <p class="lead">Zoek de twee dezelfde!</p>
+      <div class="memory-grid cols-${cards === 6 ? 3 : 4}">
+        ${deck.map((s, i) => `
+          <button class="mcard" data-i="${i}" aria-label="Kaartje ${i + 1}">
+            <span class="mcard-inner">
+              <span class="mcard-back">⭐</span>
+              <span class="mcard-front">${s.svg}</span>
+            </span>
+          </button>`).join('')}
+      </div>
+    </div>
+  `);
+  bindBack();
+  const m = mascot();
+  say('Zoek de twee dezelfde plaatjes!');
+
+  let open = [];
+  let matched = 0;
+  let misses = 0;
+  let lock = false;
+
+  $$('.mcard').forEach((card) =>
+    card.addEventListener('click', async () => {
+      const i = Number(card.dataset.i);
+      if (lock || card.classList.contains('open')) return;
+      card.classList.add('open');
+      card.setAttribute('aria-label', deck[i].name);
+      say(deck[i].name);
+      open.push(card);
+      if (open.length < 2) return;
+
+      const [a, b] = open;
+      open = [];
+      if (deck[a.dataset.i].id === deck[b.dataset.i].id) {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        soundCorrect();
+        m.react('happy');
+        matched++;
+        if (matched === pairs) {
+          await wait(1100);
+          if (isCurrent(id)) kleuterResultaat('memory', misses <= pairs);
+        }
+        return;
+      }
+      misses++;
+      lock = true;
+      await wait(1300);
+      if (!isCurrent(id)) return;
+      for (const c of [a, b]) {
+        c.classList.remove('open');
+        c.setAttribute('aria-label', `Kaartje ${Number(c.dataset.i) + 1}`);
+      }
+      lock = false;
+    }),
+  );
+}
+
+function kleuterResultaat(again, perfect) {
+  render(`
+    ${topbar('Klaar!')}
+    <div class="center">
+      <div class="mascot-wrap"></div>
+      <p class="score rainbow-text">Goed gedaan!</p>
+      <div class="reward"></div>
+      <div class="row">
+        <button class="btn primary big" id="again">Nog eens</button>
+        <button class="btn mint big" id="home">🏠 Naar het begin</button>
+      </div>
+    </div>
+  `);
+  bindBack();
+  const m = mascot();
+  setTimeout(() => m.react('happy'), 250);
+  giveSticker(perfect, m);
+  if ($('.envelope')) say('Goed gedaan! Tik op de envelop.');
+  $('#again').addEventListener('click', () => go(again));
+  $('#home').addEventListener('click', () => go('home'));
 }
 
 // ---------- Help ----------
@@ -856,7 +1159,7 @@ function giveSticker(perfect, m) {
     return;
   }
   book = result.book;
-  saveBook(book);
+  saveBook(book, bookKey());
   const { page, sticker } = findSticker(result.sticker.id);
   const acc = result.completedPage && accessoryFor(result.completedPage);
 
@@ -875,6 +1178,7 @@ function giveSticker(perfect, m) {
       </div>`;
     soundCorrect();
     m.react('happy');
+    if (child().kind === 'kleuter') say(`Je kreeg ${sticker.name}!`);
     $('#reward-go').addEventListener('click', () => (acc ? go('aankleden') : go('stickerboek', page.id)));
   });
 }
@@ -887,7 +1191,7 @@ function stickerboek(pageId) {
   render(`
     ${topbar('Stickerboek')}
     <div class="explain">
-      <p>Na elk <b>dictee</b> en elke <b>rekenronde</b> krijg je een envelop met een sticker.
+      <p>Na ${child().kind === 'kleuter' ? 'elk <b>spelletje</b>' : 'elk <b>dictee</b> en elke <b>rekenronde</b>'} krijg je een envelop met een sticker.
         Alles juist? Dan is je sticker een <b>glittersticker</b> ✨.
         Is een pagina vol, dan krijgt je eenhoorn een <b>verrassing</b>!</p>
     </div>
@@ -964,7 +1268,7 @@ function aankleden() {
           return;
         }
         book = toggleWorn(book, acc.id, STICKER_PAGES, ACCESSORIES);
-        saveBook(book);
+        saveBook(book, bookKey());
         m.wear(book.worn);
         if (book.worn.includes(acc.id)) m.react('happy');
         show();

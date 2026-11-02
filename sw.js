@@ -20,6 +20,8 @@ const FILES = [
   'js/ui/stickers.js',
   'js/logic/stickerbook.js',
   'js/stickerStore.js',
+  'js/profileStore.js',
+  'js/logic/profiles.js',
   'data/woordpakketten.json',
   'assets/icon.svg',
   'assets/sparkles.svg',
