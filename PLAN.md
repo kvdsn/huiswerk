@@ -12,18 +12,19 @@ The child writes the words on paper and says the math answers out loud.
 ## Interface language and design
 - All text on screen is in Flemish Dutch, for example "Dictee", "Rekenen", "Instellingen", "Nog eens horen", "Goed zo!", "Klaar!". Flemish words are used where they differ from Netherlands Dutch, e.g. "juf" and "leerjaar".
 - Theme: **unicorns and rainbows**. Pastel pink, lilac and mint, with stars and sparkles in the background.
-- Mascot: a small unicorn that reacts. It jumps or claps when an answer is right and gives a gentle encouraging nod when it is wrong. There's no confetti or stars. A short sound plays with each answer: a two-note chime when it's right, a soft descending "boop" when it's wrong (generated with Web Audio; can be switched off in Instellingen). The same sounds play when marking words ✓/✗ after a dictation.
+- Mascot: the child's own animal (see Children below; a unicorn by default) that reacts. It jumps or claps when an answer is right and gives a gentle encouraging nod when it is wrong. There's no confetti or stars. A short sound plays with each answer: a two-note chime when it's right, a soft descending "boop" when it's wrong (generated with Web Audio; can be switched off in Instellingen). The same sounds play when marking words ✓/✗ after a dictation.
 - Animations are quick and smooth, at 150–400 ms: screens slide or fade in, buttons bounce when tapped, and the mascot reacts. Nothing makes the child wait. Animations respect the iPad's "Reduce Motion" setting.
 - Large touch targets and a large rounded font that is easy for a child to read. Built for the iPad in both portrait and landscape.
+- On an iPad Air every screen a child uses fits without scrolling, upright or sideways, also in Safari with its toolbars. Held sideways the layouts get more compact: the toddler games sit in one row of four, the stickerboek puts its stickers beside the page reward, Nakijken uses tighter rows, an opened envelope shows the sticker beside its text, and the help cards are in two columns. Only Instellingen, for the parents, scrolls.
 
 ## Children (profiles)
-- Two fixed children: a schoolkind and a kleuter (no adding or removing). The app opens on whoever played last; two round unicorn avatars at the top of the home screen switch child in one tap. No lock.
+- Two fixed children: a schoolkind and a kleuter (no adding or removing). The app opens on whoever played last; two round avatars of the children's animals at the top of the home screen switch child in one tap. No lock.
 - Each child has a name, an own sticker book and an own animal avatar, picked from 8: eenhoorn, kat, konijn, panda, vos, uil, pinguïn, draakje. The two children never have the same animal (the other child's is shown as taken). The avatar is the mascot everywhere: it blinks, cheers, nods and shows the sticker-book rewards. Texts follow it ("Mijn panda", "Je kat krijgt…").
 - Instellingen has a tab per child ("Voor <naam>": name and avatar, then Woordpakketten and Rekenen for the schoolkind or Spelletjes for the kleuter, then that child's Stickerboek with its own reset), followed by "Voor iedereen" (Geluidjes, Stem, Eigen stem). It opens on the child who is playing.
 - The schoolkind keeps the original sticker book and the name from the old single-child setting.
 
 ## Toddler games (kleuter)
-- A kleuter's home screen shows Tellen, Memory and Stickerboek instead of Dictee and Rekenen. Ellen speaks every instruction (a four-year-old can't read yet). A wrong tap only gets a friendly "Probeer nog eens", without a sound.
+- A kleuter's home screen shows Tellen, Memory, Kleuren en vormen, Mijn naam and Stickerboek instead of Dictee and Rekenen. Ellen speaks every instruction (a four-year-old can't read yet). A wrong tap only gets a friendly "Probeer nog eens", without a sound.
 - **Tellen:** 5 questions. Up to 5 or 10 copies of a sticker ("Hoeveel zie je er?"), with three big answer buttons showing the number and dots. Tapping the pictures counts along out loud with a number badge.
 - **Memory:** 6, 8 or 12 cards with sticker pictures; Ellen names each card when it's turned over.
 - **Kleuren en vormen:** 5 questions like "Tik op de gele ster" with 4 big shapes (rondje, vierkantje, driehoekje, ster, hartje) in 7 colours. One other shape has the same colour and one the same shape, so both matter.
@@ -57,7 +58,7 @@ The child writes the words on paper and says the math answers out loud.
 - 4 themed pages (Regenboog, Zee, Dieren, Ruimte) with 9 stickers each. Stickers fill the current page first, in random order, with no duplicates. Once the album is full, a perfect round turns a plain sticker into glitter.
 - A full page gives the child's animal a themed surprise: Regenboog → a rainbow behind it, Zee → a seashell crown, Dieren → a teddy bear friend (hops along when an answer is right; it replaced a bunny once the rabbit became an avatar), Ruimte → a planet with stars circling around. They can be switched on and off on the "Mijn <dier>" screen, and show everywhere the animal appears.
 - Progress from the first version carries over: Snoep stickers moved to the Zee page, and the old accessories map to the new reward of the same page.
-- Stored on the device only. Instellingen → Stickerboek → "Stickerboek wissen" (with a confirmation) clears stickers and rewards.
+- Stored on the device only. Each child has their own book. In Instellingen, the child's tab → Stickerboek → "Stickerboek wissen" (with a confirmation) clears that child's stickers and rewards.
 
 ## Math (rekenen)
 - Adding, subtracting and times tables, read out loud, and the child says the answer.
