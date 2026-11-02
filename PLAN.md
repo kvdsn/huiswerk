@@ -12,7 +12,7 @@ The child writes the words on paper and says the math answers out loud.
 ## Interface language and design
 - All text on screen is in Flemish Dutch, for example "Dictee", "Rekenen", "Instellingen", "Nog eens horen", "Goed zo!", "Klaar!". Flemish words are used where they differ from Netherlands Dutch, e.g. "juf" and "leerjaar".
 - Theme: **unicorns and rainbows**. Pastel pink, lilac and mint, with stars and sparkles in the background.
-- Mascot: a small unicorn that reacts. It jumps or claps when an answer is right and gives a gentle encouraging nod when it is wrong. These are the only celebrations: no confetti, sounds or stars.
+- Mascot: a small unicorn that reacts. It jumps or claps when an answer is right and gives a gentle encouraging nod when it is wrong. There's no confetti or stars. A short sound plays with each answer: a two-note chime when it's right, a soft descending "boop" when it's wrong (generated with Web Audio; can be switched off in Instellingen). The same sounds play when marking words ✓/✗ after a dictation.
 - Animations are quick and smooth, at 150–400 ms: screens slide or fade in, buttons bounce when tapped, and the mascot reacts. Nothing makes the child wait. Animations respect the iPad's "Reduce Motion" setting.
 - Large touch targets and a large rounded font that is easy for a child to read. Built for the iPad in both portrait and landscape.
 

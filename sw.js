@@ -16,6 +16,7 @@ const FILES = [
   'js/logic/words.js',
   'js/logic/math.js',
   'js/ui/mascot.js',
+  'js/ui/sounds.js',
   'data/woordpakketten.json',
   'assets/icon.svg',
   'assets/sparkles.svg',

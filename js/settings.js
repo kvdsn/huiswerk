@@ -11,6 +11,7 @@ export const DEFAULTS = {
     count: 10,
   },
   name: '',
+  sounds: true,
   voiceURI: '',
   rate: 0.9,
 };

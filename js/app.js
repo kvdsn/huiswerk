@@ -6,6 +6,7 @@ import { matchCommandInAlternatives } from './logic/commands.js';
 import { buildRound, displayForm, spokenForm } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
 import { mountMascot } from './ui/mascot.js';
+import { playCorrect, playWrong } from './ui/sounds.js';
 import {
   recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
   exportRecordings, importRecordings, saveFile,
@@ -43,6 +44,10 @@ const escape = (text) =>
   String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const say = (text) => speak(text, { voiceURI: settings.voiceURI, rate: settings.rate });
+
+// Answer sounds, unless switched off in Instellingen.
+const soundCorrect = () => settings.sounds && playCorrect();
+const soundWrong = () => settings.sounds && playWrong();
 
 // "Hoi <naam>!" — the name is set in Instellingen and only stored on the device.
 const greeting = () => (settings.name.trim() ? `Hoi ${settings.name.trim()}!` : 'Hoi!');
@@ -326,8 +331,14 @@ function dicteeNakijken(round, title) {
       yes.setAttribute('aria-pressed', String(!isWrong));
       no.setAttribute('aria-pressed', String(isWrong));
     };
-    yes.addEventListener('click', () => set(false));
-    no.addEventListener('click', () => set(true));
+    yes.addEventListener('click', () => {
+      if (wrong.has(i)) soundCorrect();
+      set(false);
+    });
+    no.addEventListener('click', () => {
+      if (!wrong.has(i)) soundWrong();
+      set(true);
+    });
   });
 
   $('#done').addEventListener('click', () => {
@@ -470,12 +481,14 @@ function rekenenRun(questions) {
       feedback.className = 'feedback good';
       feedback.textContent = 'Goed zo! ⭐';
       m.react('happy');
+      soundCorrect();
       await wait(1000);
       return isCurrent(id) && advance();
     }
 
     tries++;
     m.react('encourage');
+    soundWrong();
     // Restart the animation by re-adding the class.
     feedback.className = 'feedback';
     void feedback.offsetWidth;
@@ -572,6 +585,11 @@ async function instellingen() {
         ${chips('count', [5, 10, 15, 20], (v) => settings.math.count === v)}
       </div>
       <div class="card">
+        <h2>🔔 Geluidjes</h2>
+        <p>Een belletje bij een goed antwoord, een zachte toon bij een fout.</p>
+        ${chips('sounds', ['aan', 'uit'], (v) => settings.sounds === (v === 'aan'))}
+      </div>
+      <div class="card">
         <h2>🔊 Stem</h2>
         <div class="field">
           <select id="voice" aria-label="Stem"></select>
@@ -629,6 +647,9 @@ async function instellingen() {
         update((s) => { s.math.ops = ops; });
       } else if (name === 'max' || name === 'count') {
         update((s) => { s.math[name] = value; });
+      } else if (name === 'sounds') {
+        update((s) => { s.sounds = value === 'aan'; });
+        if (settings.sounds) soundCorrect();
       }
 
       const pressed = {
@@ -637,6 +658,7 @@ async function instellingen() {
         ops: (v) => settings.math.ops[v],
         max: (v) => settings.math.max === v,
         count: (v) => settings.math.count === v,
+        sounds: (v) => settings.sounds === (v === 'aan'),
       }[name];
       group.querySelectorAll('.chip').forEach((c) => {
         const v = Number.isNaN(Number(c.dataset.value)) ? c.dataset.value : Number(c.dataset.value);
