@@ -4,6 +4,17 @@
 //   const m = mountMascot(document.querySelector('#mascot'));
 //   m.react('happy');      // jump + hoof clap (~600 ms)
 //   m.react('encourage');  // gentle nod (~500 ms)
+//   m.wear(['kroon', 'bril']); // accessories: kroon, bril, strik, vleugels
+//   mountMascot(el, { wear: ['vleugels'] }); // start with accessories on
+
+export const MASCOT_ACCESSORIES = ['kroon', 'bril', 'strik', 'vleugels'];
+
+// Accessories are always in the SVG but hidden until they get the class
+// "is-worn". Each lives in the group it should move with.
+const WING = `
+        <path d="M0 0C-10-24-36-38-44-26C-50-14-32-2 0 0Z" fill="url(#mascot-wing-grad)" stroke="#c79bd8" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M0 0C-22 0-38 10-34 20C-30 28-10 20 0 0Z" fill="#c9f2e2" stroke="#8fd6b8" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M-6-4Q-20-14-34-20M-6 3Q-18 8-26 14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>`;
 
 export const mascotSVG = `
 <svg class="mascot" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Eenhoorn">
@@ -16,7 +27,18 @@ export const mascotSVG = `
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#fbeef7"/>
     </linearGradient>
+    <linearGradient id="mascot-wing-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d7c4fb"/>
+      <stop offset=".55" stop-color="#f6d2ec"/>
+      <stop offset="1" stop-color="#fff1c4"/>
+    </linearGradient>
   </defs>
+
+  <!-- accessory: wings (behind everything) -->
+  <g class="acc acc-vleugels">
+    <g transform="translate(70 146) rotate(6) scale(1.35)"><g class="acc-wing">${WING}</g></g>
+    <g transform="translate(130 146) rotate(-6) scale(-1.35 1.35)"><g class="acc-wing">${WING}</g></g>
+  </g>
 
   <g class="mascot-body">
     <!-- tail -->
@@ -71,6 +93,16 @@ export const mascotSVG = `
       <path d="M128 56 C136 58 142 64 144 72 C138 68 132 66 126 65 Z" fill="#a8e6cf"/>
     </g>
 
+    <!-- accessory: crown, around the base of the horn (the horn shows through the gap) -->
+    <g class="acc acc-kroon">
+      <path d="M74 58L70 30L80 42L86 26L94 46H106L114 26L120 42L130 30L126 58Z" fill="#ffd95e" stroke="#e0a83a" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M73.5 49H126.5L126 58H74Z" fill="#f7c34d" stroke="#e0a83a" stroke-width="2.5" stroke-linejoin="round"/>
+      <g fill="#fff3b0" stroke="#e0a83a" stroke-width="2"><circle cx="70" cy="29" r="3.5"/><circle cx="86" cy="25" r="3.5"/><circle cx="114" cy="25" r="3.5"/><circle cx="130" cy="29" r="3.5"/></g>
+      <circle cx="84" cy="53.5" r="2.6" fill="#9be3c0"/><circle cx="116" cy="53.5" r="2.6" fill="#c8a8f0"/>
+      <path d="M0 14C-16 4-20-6-16-12C-12-18-4-18 0-10C4-18 12-18 16-12C20-6 16 4 0 14Z" transform="translate(100 53.5) scale(.24)" fill="#ff6b9a"/>
+      <path d="M76 46L77 37" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    </g>
+
     <!-- cheeks -->
     <ellipse cx="66" cy="110" rx="9" ry="6" fill="#ffb3d1" opacity="0.7"/>
     <ellipse cx="134" cy="110" rx="9" ry="6" fill="#ffb3d1" opacity="0.7"/>
@@ -92,6 +124,28 @@ export const mascotSVG = `
     <ellipse cx="92" cy="115" rx="2.2" ry="1.6" fill="#d58bb8"/>
     <ellipse cx="108" cy="115" rx="2.2" ry="1.6" fill="#d58bb8"/>
     <path d="M93 122 Q100 128 107 122" fill="none" stroke="#a0567f" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- accessory: heart glasses (outside .mascot-eyes so blinking doesn't squash them) -->
+    <g class="acc acc-bril">
+      <path d="M60 88L49 83M140 88L151 83" stroke="#ff5fa8" stroke-width="3" stroke-linecap="round"/>
+      <path d="M96 89Q100 85 104 89" fill="none" stroke="#ff5fa8" stroke-width="3.5" stroke-linecap="round"/>
+      <g fill="#ffc0de" fill-opacity=".3" stroke="#ff5fa8" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M0 14C-16 4-20-6-16-12C-12-18-4-18 0-10C4-18 12-18 16-12C20-6 16 4 0 14Z" transform="translate(78 95) scale(1.08)"/>
+        <path d="M0 14C-16 4-20-6-16-12C-12-18-4-18 0-10C4-18 12-18 16-12C20-6 16 4 0 14Z" transform="translate(122 95) scale(1.08)"/>
+      </g>
+      <path d="M65 87Q67 82 72 81M109 87Q111 82 116 81" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
+    </g>
+
+    <!-- accessory: bow at the neck -->
+    <g class="acc acc-strik" transform="translate(100 142) scale(1.3) translate(-100 -142)">
+      <g fill="#ff8fbf" stroke="#e86aa6" stroke-width="2" stroke-linejoin="round">
+        <path d="M98 144L92 158L96 157L98 161L101 145ZM102 144L108 158L104 157L102 161L99 145Z"/>
+        <path d="M100 141C95 132 83 130 82 138C81 146 92 149 100 143Z"/>
+        <path d="M100 141C105 132 117 130 118 138C119 146 108 149 100 143Z"/>
+      </g>
+      <rect x="96" y="137" width="8" height="9" rx="3.5" fill="#ff6fae" stroke="#e86aa6" stroke-width="1.5"/>
+      <circle cx="85.5" cy="136.5" r="1.4" fill="#fff" opacity=".8"/><circle cx="114.5" cy="136.5" r="1.4" fill="#fff" opacity=".8"/>
+    </g>
   </g>
 </svg>`;
 
@@ -112,7 +166,15 @@ export const mascotCSS = `
 .mascot .mascot-hoof-left,
 .mascot .mascot-hoof-right { transform-origin: 50% 10%; }
 
+/* accessories: hidden unless worn */
+.mascot .acc { display: none; }
+.mascot .acc.is-worn { display: inline; }
+/* rotate each wing around its root (the local origin set by its parent's translate) */
+.mascot .acc-wing { transform-box: view-box; transform-origin: 0 0; }
+
 @media (prefers-reduced-motion: no-preference) {
+  .mascot .acc-wing { animation: mascot-flap 1.8s ease-in-out infinite; }
+  .mascot.is-happy .acc-wing { animation: mascot-flap 300ms ease-in-out 2; }
   .mascot { animation: mascot-bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
   .mascot .mascot-tail { animation: mascot-tail 3.2s ease-in-out infinite; }
   .mascot.is-blinking .mascot-eyes { animation: mascot-blink 160ms ease-in-out; }
@@ -158,6 +220,10 @@ export const mascotCSS = `
   0%, 100% { filter: none; }
   40% { filter: drop-shadow(0 0 6px #fff3b0) brightness(1.15); }
 }
+@keyframes mascot-flap {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(12deg); }
+}
 @keyframes mascot-nod {
   0%, 100% { transform: rotate(0deg) translateY(0); }
   30% { transform: rotate(-4deg) translateY(4px); }
@@ -179,7 +245,7 @@ function injectCSS() {
 
 const REACTION_MS = { happy: 600, encourage: 500 };
 
-export function mountMascot(container) {
+export function mountMascot(container, { wear = [] } = {}) {
   injectCSS();
   container.insertAdjacentHTML('beforeend', mascotSVG.trim());
   const el = container.lastElementChild;
@@ -205,9 +271,18 @@ export function mountMascot(container) {
   }
   scheduleBlink();
 
+  function setWorn(ids = []) {
+    const on = new Set(ids);
+    for (const id of MASCOT_ACCESSORIES) {
+      el.querySelector(`.acc-${id}`)?.classList.toggle('is-worn', on.has(id));
+    }
+  }
+  setWorn(wear);
+
   return {
     el,
     react,
+    wear: setWorn,
     destroy() { clearTimeout(reactTimer); clearTimeout(blinkTimer); el.remove(); },
   };
 }

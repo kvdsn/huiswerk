@@ -7,6 +7,9 @@ import { buildRound, displayForm, spokenForm } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
 import { mountMascot } from './ui/mascot.js';
 import { playCorrect, playWrong } from './ui/sounds.js';
+import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from './ui/stickers.js';
+import { award, isPageComplete, unlockedAccessories, toggleWorn } from './logic/stickerbook.js';
+import { loadBook, saveBook, resetBook } from './stickerStore.js';
 import {
   recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
   exportRecordings, importRecordings, saveFile,
@@ -14,6 +17,7 @@ import {
 
 const app = document.getElementById('app');
 let settings = loadSettings();
+let book = loadBook();
 let pakketten = {};
 
 // Everything started by a screen (listeners, timers) is cleaned up on navigation.
@@ -54,7 +58,7 @@ const greeting = () => (settings.name.trim() ? `Hoi ${settings.name.trim()}!` : 
 
 function mascot(selector = '.mascot-wrap') {
   const el = $(selector);
-  return el ? mountMascot(el) : { react() {} };
+  return el ? mountMascot(el, { wear: book.worn }) : { react() {}, wear() {} };
 }
 
 function topbar(title, back = 'home') {
@@ -73,7 +77,7 @@ function bindBack() {
 }
 
 function go(name, ...args) {
-  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken };
+  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden };
   (screens[name] || home)(...args);
 }
 
@@ -135,12 +139,16 @@ function home() {
         <button class="tile mint" id="to-rekenen" style="--i:1">
           <span class="emoji">🔢</span>Rekenen<small>Sommen zeggen</small>
         </button>
+        <button class="tile lilac wide-tile" id="to-stickers" style="--i:2">
+          <span class="emoji">📒</span>Stickerboek<small>${stickerCount()} stickers verzameld</small>
+        </button>
       </div>
     </div>
   `);
   mascot();
   $('#to-dictee').addEventListener('click', () => go('dicteeKies'));
   $('#to-rekenen').addEventListener('click', () => go('rekenenStart'));
+  $('#to-stickers').addEventListener('click', () => go('stickerboek'));
   $('#to-settings').addEventListener('click', () => go('instellingen'));
 }
 
@@ -356,6 +364,7 @@ function dicteeResultaat(round, mistakes, title) {
       <div class="mascot-wrap"></div>
       <p class="score rainbow-text">${good} van ${round.length} goed</p>
       <p class="lead">${message}</p>
+      <div class="reward"></div>
       <div class="row">
         ${mistakes.length ? '<button class="btn primary big" id="again-wrong">Foutjes nog eens oefenen</button>' : ''}
         <button class="btn mint big" id="again">Nog een dictee</button>
@@ -366,6 +375,7 @@ function dicteeResultaat(round, mistakes, title) {
   bindBack();
   const m = mascot();
   setTimeout(() => m.react(mistakes.length === 0 || good >= round.length * 0.8 ? 'happy' : 'encourage'), 250);
+  giveSticker(mistakes.length === 0, m);
   $('#again-wrong')?.addEventListener('click', () => dicteeIntro(mistakes, `${title} – foutjes`));
   $('#again').addEventListener('click', () => go('dicteeKies'));
   $('#home').addEventListener('click', () => go('home'));
@@ -534,6 +544,7 @@ function rekenenResultaat(score, total) {
       <div class="mascot-wrap"></div>
       <p class="score rainbow-text">${score} van ${total} meteen goed</p>
       <p class="lead">${score === total ? 'Alles juist! Super!' : score >= total * 0.8 ? 'Heel goed gedaan!' : 'Goed geoefend!'}</p>
+      <div class="reward"></div>
       <div class="row">
         <button class="btn primary big" id="again">Nog eens</button>
         <button class="btn mint big" id="home">🏠 Naar het begin</button>
@@ -543,6 +554,7 @@ function rekenenResultaat(score, total) {
   bindBack();
   const m = mascot();
   setTimeout(() => m.react(score >= total * 0.8 ? 'happy' : 'encourage'), 250);
+  giveSticker(score === total, m);
   $('#again').addEventListener('click', () => rekenenRun(makeQuestions(settings.math, settings.math.count)));
   $('#home').addEventListener('click', () => go('home'));
 }
@@ -583,6 +595,12 @@ async function instellingen() {
         ${chips('tables', range(1, 10), (v) => settings.math.tables.includes(v))}
         <p style="margin-top:16px">Aantal vragen</p>
         ${chips('count', [5, 10, 15, 20], (v) => settings.math.count === v)}
+      </div>
+      <div class="card">
+        <h2>📒 Stickerboek</h2>
+        <p>${stickerCount()} van ${STICKER_PAGES.reduce((n, p) => n + p.stickers.length, 0)} stickers verzameld.
+          Wissen begint het stickerboek opnieuw; ook de accessoires van de eenhoorn verdwijnen.</p>
+        <button class="btn" id="reset-stickers">🗑️ Stickerboek wissen</button>
       </div>
       <div class="card">
         <h2>🔔 Geluidjes</h2>
@@ -693,6 +711,11 @@ async function instellingen() {
   $('#rate').addEventListener('input', (event) => update((s) => { s.rate = Number(event.target.value); }));
   $('#test-voice').addEventListener('click', () => say(`${greeting()} Het woord is: de regenboog.`));
   $('#to-record').addEventListener('click', () => go('inspreken'));
+  $('#reset-stickers').addEventListener('click', () => {
+    if (!window.confirm('Alle stickers en accessoires wissen? Dit kan je niet ongedaan maken.')) return;
+    book = resetBook();
+    instellingen();
+  });
   const backupStatus = (text) => { $('#backup-status').textContent = text; };
   const refreshCount = async () => {
     const total = allWordKeys();
@@ -745,6 +768,149 @@ async function instellingen() {
   });
 
   refreshCount();
+}
+
+// ---------- Sticker book ----------
+
+const stickerCount = () => Object.keys(book.stickers).length;
+
+function findSticker(id) {
+  for (const page of STICKER_PAGES) {
+    const sticker = page.stickers.find((s) => s.id === id);
+    if (sticker) return { page, sticker };
+  }
+  return null;
+}
+
+const accessoryFor = (pageId) => ACCESSORIES.find((acc) => acc.page === pageId);
+
+const stickerTile = (sticker, glitter) =>
+  `<div class="sticker${glitter ? ' glitter' : ''}">${sticker.svg}</div>`;
+
+/**
+ * Awards the round's sticker straight away (so leaving early doesn't lose
+ * it) and shows an envelope to tap open.
+ */
+function giveSticker(perfect, m) {
+  const id = screenId;
+  const result = award(book, STICKER_PAGES, { glitter: perfect });
+  const box = $('.reward');
+  if (!result.sticker) {
+    box.innerHTML = '<p class="hint">Je stickerboek is helemaal vol! 🌈</p>';
+    return;
+  }
+  book = result.book;
+  saveBook(book);
+  const { page, sticker } = findSticker(result.sticker.id);
+  const acc = result.completedPage && accessoryFor(result.completedPage);
+
+  box.innerHTML = `
+    <button class="envelope" aria-label="Open je envelop">💌</button>
+    <p class="hint">Je verdiende een sticker! Tik op de envelop.</p>`;
+  box.querySelector('.envelope').addEventListener('click', () => {
+    if (!isCurrent(id)) return;
+    box.innerHTML = `
+      <div class="reveal">
+        ${stickerTile(sticker, result.sticker.glitter)}
+        <p class="lead">Je kreeg <b>${escape(sticker.name)}</b>!</p>
+        ${result.sticker.glitter ? '<p class="hint">✨ Een glittersticker, omdat alles juist was!</p>' : ''}
+        ${acc ? `<p class="lead unlock">De pagina ${escape(page.title)} is vol! Je eenhoorn krijgt <b>${escape(acc.name)}</b>.</p>` : ''}
+        <button class="btn ${acc ? 'primary' : ''}" id="reward-go">${acc ? '👗 Eenhoorn aankleden' : '📒 Naar je stickerboek'}</button>
+      </div>`;
+    soundCorrect();
+    m.react('happy');
+    $('#reward-go').addEventListener('click', () => (acc ? go('aankleden') : go('stickerboek', page.id)));
+  });
+}
+
+function stickerboek(pageId) {
+  const startPage =
+    STICKER_PAGES.find((p) => p.id === pageId) ||
+    STICKER_PAGES.find((p) => !isPageComplete(book, p)) ||
+    STICKER_PAGES[0];
+  render(`
+    ${topbar('Stickerboek')}
+    <div class="chips page-tabs" role="tablist"></div>
+    <div class="card album-page">
+      <div class="sticker-grid"></div>
+      <div class="page-reward"></div>
+    </div>
+    <div class="row"><button class="btn primary big" id="to-wardrobe">👗 Eenhoorn aankleden</button></div>
+  `);
+  bindBack();
+
+  function showPage(page) {
+    $('.page-tabs').innerHTML = STICKER_PAGES.map((p) => {
+      const count = p.stickers.filter((s) => book.stickers[s.id]).length;
+      return `<button class="chip${isPageComplete(book, p) ? ' done' : ''}" role="tab" data-page="${p.id}"
+        aria-pressed="${p.id === page.id}">${escape(p.title)} ${count}/${p.stickers.length}</button>`;
+    }).join('');
+    $('.sticker-grid').innerHTML = page.stickers
+      .map((s, i) => {
+        const got = book.stickers[s.id];
+        return got
+          ? `<figure style="--i:${i}">${stickerTile(s, got.glitter)}<figcaption>${escape(s.name)}</figcaption></figure>`
+          : `<figure style="--i:${i}"><div class="sticker empty">?</div><figcaption>&nbsp;</figcaption></figure>`;
+      })
+      .join('');
+    const acc = accessoryFor(page.id);
+    const full = isPageComplete(book, page);
+    $('.page-reward').innerHTML = acc
+      ? `<div class="acc-icon${full ? '' : ' locked'}">${ACCESSORY_ICONS[acc.id]}</div>
+         <p>${full ? `Pagina vol! Je eenhoorn mag <b>${escape(acc.name)}</b> dragen.` : `Maak de pagina vol, dan krijgt je eenhoorn <b>${escape(acc.name)}</b>.`}</p>`
+      : '';
+    $$('.page-tabs .chip').forEach((chip) =>
+      chip.addEventListener('click', () => showPage(STICKER_PAGES.find((p) => p.id === chip.dataset.page))),
+    );
+  }
+
+  $('#to-wardrobe').addEventListener('click', () => go('aankleden'));
+  showPage(startPage);
+}
+
+function aankleden() {
+  render(`
+    ${topbar('Eenhoorn aankleden', 'stickerboek')}
+    <div class="center">
+      <div class="mascot-wrap big"></div>
+      <div class="wardrobe"></div>
+      <p class="hint" id="wardrobe-hint"></p>
+    </div>
+  `);
+  bindBack();
+  const m = mascot();
+
+  function show() {
+    const unlocked = unlockedAccessories(book, STICKER_PAGES, ACCESSORIES);
+    $('.wardrobe').innerHTML = ACCESSORIES.map((acc) => {
+      const open = unlocked.includes(acc.id);
+      const page = STICKER_PAGES.find((p) => p.id === acc.page);
+      return `<button class="wardrobe-item${open ? '' : ' locked'}" data-acc="${acc.id}"
+          aria-pressed="${book.worn.includes(acc.id)}" ${open ? '' : 'aria-disabled="true"'}>
+        <span class="acc-icon">${ACCESSORY_ICONS[acc.id]}</span>
+        <span>${open ? escape(acc.name) : `🔒 ${escape(page.title)}`}</span>
+      </button>`;
+    }).join('');
+    $('#wardrobe-hint').textContent = unlocked.length
+      ? 'Tik om iets aan of uit te doen.'
+      : 'Maak een stickerpagina vol om je eerste accessoire te krijgen!';
+    $$('.wardrobe-item').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const acc = ACCESSORIES.find((a) => a.id === btn.dataset.acc);
+        if (!unlocked.includes(acc.id)) {
+          const page = STICKER_PAGES.find((p) => p.id === acc.page);
+          $('#wardrobe-hint').textContent = `Maak eerst de pagina ${page.title} vol.`;
+          return;
+        }
+        book = toggleWorn(book, acc.id, STICKER_PAGES, ACCESSORIES);
+        saveBook(book);
+        m.wear(book.worn);
+        if (book.worn.includes(acc.id)) m.react('happy');
+        show();
+      }),
+    );
+  }
+  show();
 }
 
 // ---------- Recording words in a parent's voice ----------
