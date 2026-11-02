@@ -5,13 +5,13 @@ import {
 import { matchCommandInAlternatives } from './logic/commands.js';
 import { buildRound, displayForm, spokenForm, shuffle } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
-import { mountMascot } from './ui/mascot.js';
+import { mountMascot, AVATARS, avatarInfo } from './ui/mascot.js';
 import { playCorrect, playWrong } from './ui/sounds.js';
 import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from './ui/stickers.js';
 import { award, isPageComplete, unlockedAccessories, toggleWorn } from './logic/stickerbook.js';
 import { loadBook, saveBook, resetBook } from './stickerStore.js';
 import {
-  currentProfile, setCurrent, updateProfile, stickerKey,
+  currentProfile, setCurrent, updateProfile, stickerKey, takenAvatar,
 } from './logic/profiles.js';
 import { loadProfiles, saveProfiles } from './profileStore.js';
 import { makeShapeQuestion, makeNameGame, COLOURS } from './logic/kleuter.js';
@@ -74,7 +74,12 @@ const greeting = () => (child().name.trim() ? `Hoi ${child().name.trim()}!` : 'H
 
 function mascot(selector = '.mascot-wrap') {
   const el = $(selector);
-  return el ? mountMascot(el, { wear: book.worn, palette: child().palette }) : { react() {}, wear() {} };
+  return el ? mountMascot(el, { wear: book.worn, avatar: child().avatar }) : { react() {}, wear() {} };
+}
+
+/** The current child's animal: "eenhoorn", "kat", … */
+function pet() {
+  return avatarInfo(child().avatar).noun;
 }
 
 function topbar(title, back = 'home') {
@@ -623,20 +628,28 @@ async function instellingen(kidId = profiles.current) {
     <div class="kid-tabs" role="tablist">
       ${profiles.profiles.map((p) => `
         <button class="kid-tab" role="tab" data-kid="${p.id}" aria-selected="${p.id === kid.id}">
-          <span class="avatar-mascot" data-palette="${p.palette}"></span>
+          <span class="avatar-mascot" data-avatar="${p.avatar}"></span>
           <span class="kid-tab-name">${escape(kidLabel(p))}</span>
         </button>`).join('')}
     </div>
     <div class="settings">
       <h2 class="section-title">Voor <span class="kid-title">${escape(kidLabel(kid))}</span></h2>
       <div class="card">
-        <h2>🦄 Naam en eenhoorn</h2>
-        <p>Zo begroet de eenhoorn ${kid.kind === 'school' ? 'het schoolkind' : 'de kleuter'}. De naam blijft op dit toestel.</p>
+        <h2>🦄 Naam en diertje</h2>
+        <p>Zo begroet het diertje ${kid.kind === 'school' ? 'het schoolkind' : 'de kleuter'}. De naam blijft op dit toestel.</p>
         <div class="field">
           <input class="kid-name" type="text" maxlength="20" autocomplete="off" placeholder="Naam"
             aria-label="Naam" value="${escape(kid.name)}">
         </div>
-        <div class="chips">${kidChip('palette', 'roze', '🩷 Roze eenhoorn')}${kidChip('palette', 'paars', '💜 Paarse eenhoorn')}</div>
+        <p class="pick-label">Kies een diertje</p>
+        <div class="avatar-grid">${AVATARS.map((a) => {
+          const takenBy = a.id === takenAvatar(profiles, kid.id) ? profiles.profiles.find((p) => p.id !== kid.id) : null;
+          return `<button class="avatar-pick" data-avatar-pick="${a.id}" aria-pressed="${kid.avatar === a.id}"
+              ${takenBy ? `aria-disabled="true"` : ''}>
+            <span class="avatar-mascot" data-avatar="${a.id}"></span>
+            <span>${takenBy ? `bij ${escape(kidLabel(takenBy))}` : escape(a.noun)}</span>
+          </button>`;
+        }).join('')}</div>
       </div>
       ${kid.kind === 'school' ? `
       <div class="card">
@@ -665,7 +678,7 @@ async function instellingen(kidId = profiles.current) {
       <div class="card">
         <h2>📒 Stickerboek</h2>
         <p>${Object.keys(kidBook.stickers).length} van ${STICKER_PAGES.reduce((n, p) => n + p.stickers.length, 0)} stickers verzameld.
-          Wissen begint dit stickerboek opnieuw; ook de verrassingen van de eenhoorn verdwijnen.</p>
+          Wissen begint dit stickerboek opnieuw; ook de verrassingen van het diertje verdwijnen.</p>
         <button class="btn" id="reset-stickers">🗑️ Stickerboek wissen</button>
       </div>
 
@@ -840,14 +853,14 @@ function avatars() {
   if (profiles.profiles.length < 2) return '';
   return `<div class="avatars">${profiles.profiles
     .map((p) => `<button class="avatar" data-kid="${p.id}" aria-pressed="${p.id === profiles.current}"
-        aria-label="${escape(kidLabel(p))}"><span class="avatar-mascot" data-palette="${p.palette}"></span></button>`)
+        aria-label="${escape(kidLabel(p))}"><span class="avatar-mascot" data-avatar="${p.avatar}"></span></button>`)
     .join('')}</div>`;
 }
 
 function mountAvatarMascots(root = app) {
   root.querySelectorAll('.avatar-mascot').forEach((el) => {
     el.innerHTML = '';
-    mountMascot(el, { palette: el.dataset.palette });
+    mountMascot(el, { avatar: el.dataset.avatar });
   });
 }
 
@@ -864,7 +877,7 @@ function bindAvatars() {
 
 /** Tabs, name, colour, games and sticker-book reset for the child shown in Instellingen. */
 function bindKidSettings(kid) {
-  mountAvatarMascots($('.kid-tabs'));
+  mountAvatarMascots(); // The tabs and the avatar picker.
   const save = (patch) => {
     profiles = updateProfile(profiles, kid.id, patch);
     saveProfiles(profiles);
@@ -887,11 +900,16 @@ function bindKidSettings(kid) {
       const raw = chip.dataset.value;
       save({ [field]: Number.isNaN(Number(raw)) ? raw : Number(raw) });
       $$(`.chip[data-field="${field}"]`).forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
-      if (field === 'palette') {
-        const avatar = $(`.kid-tab[data-kid="${kid.id}"] .avatar-mascot`);
-        avatar.dataset.palette = kid.palette;
-        mountAvatarMascots($('.kid-tabs'));
-      }
+    }),
+  );
+
+  $$('[data-avatar-pick]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      if (btn.getAttribute('aria-disabled') === 'true' || btn.dataset.avatarPick === kid.avatar) return;
+      save({ avatar: btn.dataset.avatarPick });
+      const top = window.scrollY;
+      instellingen(kid.id);
+      window.scrollTo({ top });
     }),
   );
 
@@ -1273,14 +1291,14 @@ const HELP = [
     icon: '✏️',
     title: 'Dictee',
     text: `Kies een woordpakket, of “Gemengd” voor woordjes uit alle pakketten.
-      Neem je blad en je potlood. De eenhoorn zegt een woord, en jij schrijft het op.
+      Neem je blad en je potlood. De app zegt een woord, en jij schrijft het op.
       Zeg “klaar” als je het geschreven hebt. Wil je het nog eens horen? Zeg “wablieft?”.
       Op het einde kijk je je blad na: tik op het kruisje bij een fout.`,
   },
   {
     icon: '🔢',
     title: 'Rekenen',
-    text: `De eenhoorn zegt een som. Zeg het antwoord hardop, of typ het en tik op OK.
+    text: `De app zegt een som. Zeg het antwoord hardop, of typ het en tik op OK.
       Was het fout? Dan mag je nog een keer proberen.`,
   },
   {
@@ -1296,8 +1314,8 @@ const HELP = [
     title: 'Stickers',
     text: `Na elk dictee en elke rekenronde krijg je een envelop met een sticker.
       Alles juist? Dan krijg je een glittersticker.
-      Is een pagina in je stickerboek vol, dan krijgt je eenhoorn een verrassing.
-      Bij “Mijn eenhoorn” kies je wat je eenhoorn bij zich heeft.`,
+      Is een pagina in je stickerboek vol, dan krijgt je diertje een verrassing.
+      Bij “Mijn diertje” kies je wat je diertje bij zich heeft.`,
   },
 ];
 
@@ -1364,8 +1382,8 @@ function giveSticker(perfect, m) {
         ${stickerTile(sticker, result.sticker.glitter)}
         <p class="lead">Je kreeg <b>${escape(sticker.name)}</b>!</p>
         ${result.sticker.glitter ? '<p class="hint">✨ Een glittersticker, omdat alles juist was!</p>' : ''}
-        ${acc ? `<p class="lead unlock">De pagina ${escape(page.title)} is vol! Je eenhoorn krijgt <b>${escape(acc.name)}</b>.</p>` : ''}
-        <button class="btn ${acc ? 'primary' : ''}" id="reward-go">${acc ? '🦄 Naar je eenhoorn' : '📒 Naar je stickerboek'}</button>
+        ${acc ? `<p class="lead unlock">De pagina ${escape(page.title)} is vol! Je ${pet()} krijgt <b>${escape(acc.name)}</b>.</p>` : ''}
+        <button class="btn ${acc ? 'primary' : ''}" id="reward-go">${acc ? `🐾 Naar je ${pet()}` : '📒 Naar je stickerboek'}</button>
       </div>`;
     soundCorrect();
     m.react('happy');
@@ -1384,14 +1402,14 @@ function stickerboek(pageId) {
     <div class="explain">
       <p>Na ${child().kind === 'kleuter' ? 'elk <b>spelletje</b>' : 'elk <b>dictee</b> en elke <b>rekenronde</b>'} krijg je een envelop met een sticker.
         Alles juist? Dan is je sticker een <b>glittersticker</b> ✨.
-        Is een pagina vol, dan krijgt je eenhoorn een <b>verrassing</b>!</p>
+        Is een pagina vol, dan krijgt je ${pet()} een <b>verrassing</b>!</p>
     </div>
     <div class="chips page-tabs" role="tablist"></div>
     <div class="card album-page">
       <div class="sticker-grid"></div>
       <div class="page-reward"></div>
     </div>
-    <div class="row"><button class="btn primary big" id="to-wardrobe">🦄 Mijn eenhoorn</button></div>
+    <div class="row"><button class="btn primary big" id="to-wardrobe">🐾 Mijn ${pet()}</button></div>
   `);
   bindBack();
 
@@ -1413,7 +1431,7 @@ function stickerboek(pageId) {
     const full = isPageComplete(book, page);
     $('.page-reward').innerHTML = acc
       ? `<div class="acc-icon${full ? '' : ' locked'}">${ACCESSORY_ICONS[acc.id]}</div>
-         <p>${full ? `Pagina vol! Je eenhoorn kreeg <b>${escape(acc.name)}</b>.` : `Maak de pagina vol, dan krijgt je eenhoorn <b>${escape(acc.name)}</b>.`}</p>`
+         <p>${full ? `Pagina vol! Je ${pet()} kreeg <b>${escape(acc.name)}</b>.` : `Maak de pagina vol, dan krijgt je ${pet()} <b>${escape(acc.name)}</b>.`}</p>`
       : '';
     $$('.page-tabs .chip').forEach((chip) =>
       chip.addEventListener('click', () => showPage(STICKER_PAGES.find((p) => p.id === chip.dataset.page))),
@@ -1426,7 +1444,7 @@ function stickerboek(pageId) {
 
 function aankleden() {
   render(`
-    ${topbar('Mijn eenhoorn', 'stickerboek')}
+    ${topbar(`Mijn ${pet()}`, 'stickerboek')}
     <div class="center">
       <div class="mascot-wrap big"></div>
       <div class="wardrobe"></div>
@@ -1448,8 +1466,8 @@ function aankleden() {
       </button>`;
     }).join('');
     $('#wardrobe-hint').textContent = unlocked.length
-      ? 'Tik om iets bij je eenhoorn te zetten of weg te halen.'
-      : 'Maak een stickerpagina vol, dan krijgt je eenhoorn een verrassing!';
+      ? `Tik om iets bij je ${pet()} te zetten of weg te halen.`
+      : `Maak een stickerpagina vol, dan krijgt je ${pet()} een verrassing!`;
     $$('.wardrobe-item').forEach((btn) =>
       btn.addEventListener('click', () => {
         const acc = ACCESSORIES.find((a) => a.id === btn.dataset.acc);

@@ -1,18 +1,31 @@
-// Mascot: a small friendly unicorn that reacts to answers.
+// Mascot: a small friendly animal (the child's chosen avatar) that reacts to answers.
 // No dependencies. Usage:
 //   import { mountMascot } from './ui/mascot.js';
-//   const m = mountMascot(document.querySelector('#mascot'));
-//   m.react('happy');      // jump + hoof clap (~600 ms)
+//   const m = mountMascot(document.querySelector('#mascot'), { avatar: 'panda' });
+//   m.react('happy');      // jump + paw clap (~600 ms)
 //   m.react('encourage');  // gentle nod (~500 ms)
 //   m.wear(['regenboog', 'konijntje']); // accessories: regenboog, schelpenkroon, konijntje, planeet
-//   mountMascot(el, { wear: ['planeet'] }); // start with accessories on
-//   mountMascot(el, { palette: 'paars' });  // colour variant: 'roze' (default) or 'paars' ('mint' = old alias for 'paars')
-//   m.palette('roze');     // switch colours live
+//   m.avatar('vos');       // switch animal live (worn rewards stay)
+// The animals live in ./avatars/ (one file each, see ./avatars/CONTRACT.md);
+// the rewards and all reactions are shared and drawn around any avatar.
 
+import { AVATARS } from './avatars/index.js';
+
+export { AVATARS };
+export const AVATAR_IDS = AVATARS.map((a) => a.id);
 export const MASCOT_ACCESSORIES = ['regenboog', 'schelpenkroon', 'konijntje', 'planeet'];
-export const MASCOT_PALETTES = ['roze', 'paars']; // 'roze' = the original look; 'paars' = purple/lilac sister
-// old names still accepted (saved data), not offered as choices
-const PALETTE_ALIASES = { mint: 'paars' };
+const DEFAULT_AVATAR = 'eenhoorn';
+const BY_ID = new Map(AVATARS.map((a) => [a.id, a]));
+// the old colour palettes ('roze', 'paars', alias 'mint') were all unicorns
+const PALETTE_AVATAR = { roze: 'eenhoorn', paars: 'eenhoorn', mint: 'eenhoorn' };
+
+const findAvatar = (id) => BY_ID.get(id) ?? BY_ID.get(DEFAULT_AVATAR);
+
+/** { id, noun, article } of an avatar (unknown ids give the unicorn), e.g. for "de eenhoorn". */
+export function avatarInfo(id) {
+  const { id: aid, noun, article } = findAvatar(id);
+  return { id: aid, noun, article };
+}
 
 // Accessories are always in the SVG but hidden until they get the class
 // "is-worn". Each lives in the group it should move with.
@@ -40,19 +53,20 @@ const PLANET = '<g transform="rotate(-20) scale(1.3)">'
   + '<path d="M-17 0A17 5.5 0 0 0 17 0" fill="none" stroke="#ffd36e" stroke-width="3.5" stroke-linecap="round"/>'
   + '<circle cx="-4" cy="-5" r="2" fill="#fff" opacity=".8"/></g>';
 
-export const mascotSVG = `
-<svg class="mascot" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Eenhoorn">
-  <defs>
-    <linearGradient id="mascot-horn-grad" x1="0" y1="0" x2="1" y2="1">
-      <stop class="m-horn-s1" offset="0" stop-color="#fff3b0"/>
-      <stop class="m-horn-s2" offset="1" stop-color="#f7c95c"/>
-    </linearGradient>
-    <linearGradient id="mascot-skin-grad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop class="m-skin-s2" offset="1" stop-color="#fbeef7"/>
-    </linearGradient>
-  </defs>
+// The crown is drawn in its own coordinates with its centre-bottom at
+// (100 62); each avatar's crown {x, y, scale} moves it onto that animal's head.
+const CROWN_ANCHOR = { x: 100, y: 62 };
+const CROWN = `
+    <g class="acc acc-schelpenkroon">
+      <path d="M72 50Q86 46 92 50L91 59Q84 56 73 59ZM108 50Q114 46 128 50L127 59Q116 56 109 59Z" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M88 52Q100 57 112 52L111 60Q100 64 89 60Z" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2.2" stroke-linejoin="round"/>
+      ${shell(73, 52, -32, 0.85, '#d9c6fa', '#b48ad6')}${shell(127, 52, 32, 0.85, '#d9c6fa', '#b48ad6')}
+      ${shell(85, 50, -10, 1.1, '#ffc0dc', '#e48fbf')}${shell(115, 50, 10, 1.1, '#ffc0dc', '#e48fbf')}
+      ${pearl(79, 56, 2.6)}${pearl(92, 56.5, 2.8)}${pearl(100, 59, 3.4)}${pearl(108, 56.5, 2.8)}${pearl(121, 56, 2.6)}
+    </g>
+`;
 
+const REWARDS_BEHIND = `
   <!-- accessory: rainbow (behind everything) -->
   <g class="acc acc-regenboog">
     <g class="acc-rainbow" fill="none" stroke-width="10.5">
@@ -61,92 +75,9 @@ export const mascotSVG = `
     ${cloud(-1, 176)}${cloud(201, 176)}
   </g>
 
-  <g class="mascot-body">
-    <!-- tail -->
-    <g class="mascot-tail">
-      <path d="M136 162 C160 158 170 140 162 126 C176 134 180 156 166 170 C156 180 140 176 136 162 Z" class="m-c2" fill="#c8a8f0" stroke="#b48ad6" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M138 164 C156 164 166 152 166 140 C172 152 168 166 156 172 C148 175 141 171 138 164 Z" class="m-c4" fill="#a8e6cf"/>
-    </g>
-    <!-- torso -->
-    <ellipse cx="100" cy="160" rx="40" ry="28" class="m-line" fill="url(#mascot-skin-grad)" stroke="#c79bd8" stroke-width="3"/>
-    <!-- belly sparkle -->
-    <path d="M100 160 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 Z" class="m-sparkle" fill="#ffd1e8"/>
-    <!-- front legs -->
-    <g class="mascot-hoof-left">
-      <rect x="72" y="158" width="20" height="34" rx="10" class="m-line" fill="url(#mascot-skin-grad)" stroke="#c79bd8" stroke-width="3"/>
-      <path d="M72.5 182 h19 v2 a8.5 8.5 0 0 1 -8.5 8.5 h-2 a8.5 8.5 0 0 1 -8.5 -8.5 Z" class="m-hoof" fill="#d9b8f2"/>
-    </g>
-    <g class="mascot-hoof-right">
-      <rect x="108" y="158" width="20" height="34" rx="10" class="m-line" fill="url(#mascot-skin-grad)" stroke="#c79bd8" stroke-width="3"/>
-      <path d="M108.5 182 h19 v2 a8.5 8.5 0 0 1 -8.5 8.5 h-2 a8.5 8.5 0 0 1 -8.5 -8.5 Z" class="m-hoof" fill="#d9b8f2"/>
-    </g>
-  </g>
+`;
 
-  <g class="mascot-head">
-    <!-- back mane (behind head) -->
-    <g class="mascot-mane">
-      <path d="M58 60 C34 74 30 110 44 134 C36 112 46 92 60 84 Z" class="m-c1" fill="#ffb3d9" stroke="#e48fbf" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M62 70 C46 88 46 118 60 138 C56 116 62 100 72 92 Z" class="m-c2" fill="#c8a8f0" stroke="#b48ad6" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M146 64 C168 80 170 112 156 134 C162 112 154 96 140 88 Z" fill="#fff0a8" stroke="#e8cf6a" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M142 60 C164 72 170 100 160 124 C160 104 152 90 140 84 Z" class="m-c4" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2" stroke-linejoin="round"/>
-    </g>
-
-    <!-- ears -->
-    <path d="M58 64 L56 30 L84 50 Z" class="m-line" fill="url(#mascot-skin-grad)" stroke="#c79bd8" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M61 56 L60 38 L76 50 Z" class="m-ear" fill="#ffc6e2"/>
-    <path d="M142 64 L144 30 L116 50 Z" class="m-line" fill="url(#mascot-skin-grad)" stroke="#c79bd8" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M139 56 L140 38 L124 50 Z" class="m-ear" fill="#ffc6e2"/>
-
-    <!-- head -->
-    <ellipse cx="100" cy="92" rx="50" ry="45" class="m-line" fill="url(#mascot-skin-grad)" stroke="#c79bd8" stroke-width="3"/>
-
-    <!-- horn -->
-    <g class="mascot-horn">
-      <path d="M90 52 L100 8 L110 52 Q100 57 90 52 Z" class="m-horn" fill="url(#mascot-horn-grad)" stroke="#e0a83a" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M92.5 42 Q100 40 107.5 36 M94.5 32 Q100 30 105 26 M96.5 22 Q100 21 103 17" class="m-horn" fill="none" stroke="#e0a83a" stroke-width="2" stroke-linecap="round"/>
-    </g>
-
-    <!-- front mane / forelock (rainbow curls) -->
-    <g class="mascot-mane">
-      <path d="M86 52 C70 46 54 54 50 70 C48 80 52 90 58 96 C58 84 64 74 76 70 C80 76 88 78 94 74 C90 68 88 60 86 52 Z" class="m-c1" fill="#ffb3d9" stroke="#e48fbf" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M70 56 C62 60 58 68 58 78 C62 72 68 68 74 67 Z" fill="#fff3b0"/>
-      <path d="M112 52 C126 46 142 52 148 66 C150 74 148 82 144 88 C142 78 136 70 126 68 C124 62 118 56 112 52 Z" class="m-c2" fill="#c8a8f0" stroke="#b48ad6" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M128 56 C136 58 142 64 144 72 C138 68 132 66 126 65 Z" class="m-c4" fill="#a8e6cf"/>
-    </g>
-
-    <!-- accessory: crown of shells and pearls around the base of the horn (the horn stays free) -->
-    <g class="acc acc-schelpenkroon">
-      <path d="M72 50Q86 46 92 50L91 59Q84 56 73 59ZM108 50Q114 46 128 50L127 59Q116 56 109 59Z" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2.2" stroke-linejoin="round"/>
-      <path d="M88 52Q100 57 112 52L111 60Q100 64 89 60Z" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2.2" stroke-linejoin="round"/>
-      ${shell(73, 52, -32, 0.85, '#d9c6fa', '#b48ad6')}${shell(127, 52, 32, 0.85, '#d9c6fa', '#b48ad6')}
-      ${shell(85, 50, -10, 1.1, '#ffc0dc', '#e48fbf')}${shell(115, 50, 10, 1.1, '#ffc0dc', '#e48fbf')}
-      ${pearl(79, 56, 2.6)}${pearl(92, 56.5, 2.8)}${pearl(100, 59, 3.4)}${pearl(108, 56.5, 2.8)}${pearl(121, 56, 2.6)}
-    </g>
-
-    <!-- cheeks -->
-    <ellipse cx="66" cy="110" rx="9" ry="6" class="m-cheek" fill="#ffb3d1" opacity="0.7"/>
-    <ellipse cx="134" cy="110" rx="9" ry="6" class="m-cheek" fill="#ffb3d1" opacity="0.7"/>
-
-    <!-- eyes -->
-    <g class="mascot-eyes">
-      <ellipse cx="78" cy="94" rx="10" ry="12.5" fill="#4a3266"/>
-      <ellipse cx="122" cy="94" rx="10" ry="12.5" fill="#4a3266"/>
-      <circle cx="81.5" cy="89" r="4" fill="#ffffff"/>
-      <circle cx="125.5" cy="89" r="4" fill="#ffffff"/>
-      <circle cx="75" cy="99" r="2" fill="#ffffff" opacity="0.85"/>
-      <circle cx="119" cy="99" r="2" fill="#ffffff" opacity="0.85"/>
-      <path d="M68 86 L63 82 M70 82 L66 77" stroke="#4a3266" stroke-width="2.2" stroke-linecap="round"/>
-      <path d="M132 86 L137 82 M130 82 L134 77" stroke="#4a3266" stroke-width="2.2" stroke-linecap="round"/>
-    </g>
-
-    <!-- muzzle -->
-    <ellipse cx="100" cy="118" rx="24" ry="14" class="m-muzzle" fill="#ffe3f1"/>
-    <ellipse cx="92" cy="115" rx="2.2" ry="1.6" class="m-nostril" fill="#d58bb8"/>
-    <ellipse cx="108" cy="115" rx="2.2" ry="1.6" class="m-nostril" fill="#d58bb8"/>
-    <path d="M93 122 Q100 128 107 122" fill="none" class="m-mouth" stroke="#a0567f" stroke-width="2.5" stroke-linecap="round"/>
-
-  </g>
-
+const REWARDS_FRONT = `
   <!-- accessory: a little planet and stars circling the unicorn (behind the bunny) -->
   <g class="acc acc-planeet">
     <g class="acc-orbit">
@@ -170,21 +101,63 @@ export const mascotSVG = `
       <path d="M-2.4-.6Q0 1.6 2.4-.6" fill="none" stroke="#4a3266" stroke-width="1.3" stroke-linecap="round"/>
     </g></g>
   </g>
-</svg>`;
+`;
 
+function crownMarkup({ x, y, scale = 1 }) {
+  const t = `translate(${x} ${y}) scale(${scale}) translate(${-CROWN_ANCHOR.x} ${-CROWN_ANCHOR.y})`;
+  return `<g transform="${t}">${CROWN.trim()}</g>`;
+}
+
+// Put the crown where the avatar marks {crown}, or else last inside .mascot-head.
+function withCrown(markup, crown) {
+  if (markup.includes('{crown}')) return markup.replace('{crown}', crown);
+  const open = markup.search(/<g\b[^>]*class="[^"]*\bmascot-head\b/);
+  if (open < 0) return markup + crown;
+  const tags = /<g\b[^>]*?(\/?)>|<\/g>/g;
+  tags.lastIndex = open;
+  let depth = 0;
+  for (let m; (m = tags.exec(markup));) {
+    if (m[0] === '</g>') depth -= 1;
+    else if (!m[1]) depth += 1;
+    if (depth === 0) return markup.slice(0, m.index) + crown + markup.slice(m.index);
+  }
+  return markup + crown;
+}
+
+/** The inside of the mascot <svg> for one avatar; ids are made unique with `uid`. */
+function mascotInner(avatar, uid) {
+  const inner = `
+  <defs>${avatar.defs || ''}
+  </defs>
+${REWARDS_BEHIND}${withCrown(avatar.markup, crownMarkup(avatar.crown || CROWN_ANCHOR))}
+
+${REWARDS_FRONT}`;
+  return inner.replaceAll('{uid}', `mascot-${uid}`);
+}
+
+const capital = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** Full SVG markup as a string (no DOM needed): for review pages and tests. */
+export function mascotSVG({ avatar = DEFAULT_AVATAR, wear = [], uid = 'x' } = {}) {
+  const a = findAvatar(avatar);
+  const on = new Set(wear);
+  const inner = mascotInner(a, uid).replace(/class="acc acc-([a-z]+)"/g,
+    (m, id) => (on.has(id) ? `class="acc acc-${id} is-worn"` : m));
+  return `<svg class="mascot avatar-${a.id}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${capital(a.noun)}">${inner}</svg>`;
+}
+
+// Shared CSS for every avatar (reactions, blink, idle bob, rewards). Each
+// avatar's own `css` is added after it, once per page.
 export const mascotCSS = `
 .mascot { display: block; width: 100%; height: auto; overflow: visible; }
 .mascot .mascot-body,
 .mascot .mascot-head,
 .mascot .mascot-eyes,
-.mascot .mascot-horn,
-.mascot .mascot-mane,
 .mascot .mascot-tail,
 .mascot .mascot-hoof-left,
 .mascot .mascot-hoof-right { transform-box: fill-box; }
 .mascot .mascot-head { transform-origin: 50% 92%; }
 .mascot .mascot-eyes { transform-origin: 50% 50%; }
-.mascot .mascot-horn { transform-origin: 50% 100%; }
 .mascot .mascot-tail { transform-origin: 0% 50%; }
 .mascot .mascot-hoof-left,
 .mascot .mascot-hoof-right { transform-origin: 50% 10%; }
@@ -197,25 +170,6 @@ export const mascotCSS = `
 .mascot .acc-orbit-item { transform-box: fill-box; transform-origin: 50% 50%; }
 .mascot .acc-bunny,
 .mascot .acc-bunny-ear { transform-box: fill-box; transform-origin: 50% 100%; }
-
-/* palette "paars": the purple/lilac sister unicorn. "roze" is the markup's own
-   colours. CSS fill/stroke beat the presentation attributes; the gradients get
-   per-instance ids in mountMascot so their stops can be recoloured too. */
-.mascot.palette-paars .m-line { stroke: #b49ad9; }
-.mascot.palette-paars .m-skin-s2 { stop-color: #f4effd; }
-.mascot.palette-paars .m-c1 { fill: #b38cf0; stroke: #8d62d4; }
-.mascot.palette-paars .m-c2 { fill: #d2bcfa; stroke: #a283de; }
-.mascot.palette-paars .m-c4 { fill: #f2c6ee; stroke: #cf96d3; }
-.mascot.palette-paars .m-sparkle { fill: #e0cffb; }
-.mascot.palette-paars .m-hoof { fill: #cdb6f4; }
-.mascot.palette-paars .m-ear { fill: #ddcbfa; }
-.mascot.palette-paars .m-cheek { fill: #e8a6dc; }
-.mascot.palette-paars .m-muzzle { fill: #f1e8fd; }
-.mascot.palette-paars .m-nostril { fill: #b28ed2; }
-.mascot.palette-paars .m-mouth { stroke: #7d52a3; }
-.mascot.palette-paars .m-horn { stroke: #9c88cf; }
-.mascot.palette-paars .m-horn-s1 { stop-color: #ffffff; }
-.mascot.palette-paars .m-horn-s2 { stop-color: #cdbdf2; }
 
 @media (prefers-reduced-motion: no-preference) {
   .mascot .acc-rainbow { animation: mascot-shimmer 7s ease-in-out infinite; }
@@ -231,7 +185,6 @@ export const mascotCSS = `
   .mascot.is-happy { animation: mascot-jump 600ms cubic-bezier(.3,.7,.4,1); }
   .mascot.is-happy .mascot-hoof-left  { animation: mascot-clap-left 600ms ease-in-out; }
   .mascot.is-happy .mascot-hoof-right { animation: mascot-clap-right 600ms ease-in-out; }
-  .mascot.is-happy .mascot-horn { animation: mascot-horn-glow 600ms ease-out; }
 
   .mascot.is-encourage .mascot-head { animation: mascot-nod 500ms ease-in-out; }
 }
@@ -265,10 +218,6 @@ export const mascotCSS = `
   25%, 65% { transform: rotate(42deg); }
   45%, 85% { transform: rotate(22deg); }
 }
-@keyframes mascot-horn-glow {
-  0%, 100% { filter: none; }
-  40% { filter: drop-shadow(0 0 6px #fff3b0) brightness(1.15); }
-}
 @keyframes mascot-shimmer {
   0%, 100% { filter: none; opacity: 1; }
   50% { filter: brightness(1.06) saturate(1.1); opacity: .92; }
@@ -300,11 +249,11 @@ export const mascotCSS = `
 }
 `;
 
-function injectCSS() {
-  if (typeof document === 'undefined' || document.getElementById('mascot-css')) return;
+function injectCSS(id, css) {
+  if (typeof document === 'undefined' || !css || document.getElementById(id)) return;
   const style = document.createElement('style');
-  style.id = 'mascot-css';
-  style.textContent = mascotCSS;
+  style.id = id;
+  style.textContent = css;
   document.head.appendChild(style);
 }
 
@@ -312,13 +261,14 @@ const REACTION_MS = { happy: 600, encourage: 500 };
 
 let mascotUid = 0;
 
-export function mountMascot(container, { wear = [], palette = 'roze' } = {}) {
-  injectCSS();
+export function mountMascot(container, { wear = [], avatar, palette } = {}) {
+  injectCSS('mascot-css', mascotCSS);
   // unique gradient ids per instance: two mascots on one page (or one in a
   // hidden container) must never borrow each other's gradients
   const uid = ++mascotUid;
-  container.insertAdjacentHTML('beforeend', mascotSVG.trim().replace(/mascot-(horn|skin)-grad/g, `$&-${uid}`));
+  container.insertAdjacentHTML('beforeend', mascotSVG({ avatar: avatar ?? PALETTE_AVATAR[palette], uid }));
   const el = container.lastElementChild;
+  let worn = [];
   let reactTimer = null;
   let blinkTimer = null;
 
@@ -342,25 +292,33 @@ export function mountMascot(container, { wear = [], palette = 'roze' } = {}) {
   scheduleBlink();
 
   function setWorn(ids = []) {
+    worn = [...ids];
     const on = new Set(ids);
     for (const id of MASCOT_ACCESSORIES) {
       el.querySelector(`.acc-${id}`)?.classList.toggle('is-worn', on.has(id));
     }
   }
-  setWorn(wear);
 
-  function setPalette(name) {
-    const n = PALETTE_ALIASES[name] ?? name;
-    const p = MASCOT_PALETTES.includes(n) ? n : 'roze';
-    for (const id of MASCOT_PALETTES) el.classList.toggle(`palette-${id}`, id === p);
+  function setAvatar(id) {
+    const a = findAvatar(id);
+    injectCSS(`mascot-css-${a.id}`, a.css);
+    if (!el.classList.contains(`avatar-${a.id}`)) {
+      clearTimeout(reactTimer);
+      el.setAttribute('class', `mascot avatar-${a.id}`);
+      el.setAttribute('aria-label', capital(a.noun));
+      el.innerHTML = mascotInner(a, uid);
+    }
+    setWorn(worn);
   }
-  setPalette(palette);
+
+  worn = wear;
+  setAvatar(el.getAttribute('class').match(/avatar-(\S+)/)[1]);
 
   return {
     el,
     react,
     wear: setWorn,
-    palette: setPalette,
+    avatar: setAvatar,
     destroy() { clearTimeout(reactTimer); clearTimeout(blinkTimer); el.remove(); },
   };
 }

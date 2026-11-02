@@ -18,8 +18,8 @@ The child writes the words on paper and says the math answers out loud.
 
 ## Children (profiles)
 - Two fixed children: a schoolkind and a kleuter (no adding or removing). The app opens on whoever played last; two round unicorn avatars at the top of the home screen switch child in one tap. No lock.
-- Each child has a name, a unicorn colour (roze or paars) and an own sticker book.
-- Instellingen has a tab per child ("Voor <naam>": name and colour, then Woordpakketten and Rekenen for the schoolkind or Spelletjes for the kleuter, then that child's Stickerboek with its own reset), followed by "Voor iedereen" (Geluidjes, Stem, Eigen stem). It opens on the child who is playing.
+- Each child has a name, an own sticker book and an own animal avatar, picked from 8: eenhoorn, kat, konijn, panda, vos, uil, pinguïn, draakje. The two children never have the same animal (the other child's is shown as taken). The avatar is the mascot everywhere: it blinks, cheers, nods and shows the sticker-book rewards. Texts follow it ("Mijn panda", "Je kat krijgt…").
+- Instellingen has a tab per child ("Voor <naam>": name and avatar, then Woordpakketten and Rekenen for the schoolkind or Spelletjes for the kleuter, then that child's Stickerboek with its own reset), followed by "Voor iedereen" (Geluidjes, Stem, Eigen stem). It opens on the child who is playing.
 - The schoolkind keeps the original sticker book and the name from the old single-child setting.
 
 ## Toddler games (kleuter)
@@ -55,7 +55,7 @@ The child writes the words on paper and says the math answers out loud.
 ## Sticker book (stickerboek)
 - Every finished dictation or math round earns one sticker, shown as an envelope to tap open on the results screen. An all-correct round gives the glitter version.
 - 4 themed pages (Regenboog, Zee, Dieren, Ruimte) with 9 stickers each. Stickers fill the current page first, in random order, with no duplicates. Once the album is full, a perfect round turns a plain sticker into glitter.
-- A full page gives the unicorn a themed surprise: Regenboog → a rainbow behind it, Zee → a seashell crown, Dieren → a bunny friend (hops along when an answer is right), Ruimte → a planet with stars circling around. They can be switched on and off on the "Mijn eenhoorn" screen, and show everywhere the unicorn appears.
+- A full page gives the child's animal a themed surprise: Regenboog → a rainbow behind it, Zee → a seashell crown, Dieren → a bunny friend (hops along when an answer is right), Ruimte → a planet with stars circling around. They can be switched on and off on the "Mijn <dier>" screen, and show everywhere the animal appears.
 - Progress from the first version carries over: Snoep stickers moved to the Zee page, and the old accessories map to the new reward of the same page.
 - Stored on the device only. Instellingen → Stickerboek → "Stickerboek wissen" (with a confirmation) clears stickers and rewards.
 

@@ -1,18 +1,19 @@
 // The two children using the app. Pure functions on a plain state object:
 //   state = { profiles: [profile, profile], current: profileId }
-//   profile = { id, name, kind: 'school' | 'kleuter', palette: 'roze' | 'paars',
+//   profile = { id, name, kind: 'school' | 'kleuter', avatar: one of AVATAR_IDS,
 //               tellenMax: 5 | 10, memoryCards: 6 | 8 | 12 }
+// The two children never share an avatar.
 // The family is fixed: 'p1' is the school child (she keeps the original
 // sticker book and name), 'p2' the toddler.
 
-const PALETTES = ['roze', 'paars'];
+export const AVATAR_IDS = ['eenhoorn', 'kat', 'konijn', 'panda', 'vos', 'uil', 'pinguin', 'draakje'];
 const CHILDREN = [
-  { id: 'p1', kind: 'school', palette: 'roze' },
-  { id: 'p2', kind: 'kleuter', palette: 'paars' },
+  { id: 'p1', kind: 'school', avatar: 'eenhoorn' },
+  { id: 'p2', kind: 'kleuter', avatar: 'kat' },
 ];
 
-function makeProfile({ id, kind, palette }, name = '') {
-  return { id, name, kind, palette, tellenMax: 5, memoryCards: 6 };
+function makeProfile({ id, kind, avatar }, name = '') {
+  return { id, name, kind, avatar, tellenMax: 5, memoryCards: 6 };
 }
 
 /** Both children, the first named as in the old single-child settings. */
@@ -29,12 +30,16 @@ export function cleanProfiles(stored, legacyName = '') {
     return {
       ...makeProfile(c),
       name: typeof p.name === 'string' ? p.name : '',
-      // 'mint' was the first colour for the second child; it became 'paars'.
-      palette: p.palette === 'mint' ? 'paars' : PALETTES.includes(p.palette) ? p.palette : c.palette,
+      // Older versions had unicorn colours instead of avatars: keep the default animal.
+      avatar: AVATAR_IDS.includes(p.avatar) ? p.avatar : c.avatar,
       tellenMax: [5, 10].includes(p.tellenMax) ? p.tellenMax : 5,
       memoryCards: [6, 8, 12].includes(p.memoryCards) ? p.memoryCards : 6,
     };
   });
+  // Never the same avatar twice: the second child gets the first free one.
+  if (profiles[1].avatar === profiles[0].avatar) {
+    profiles[1].avatar = AVATAR_IDS.find((a) => a !== profiles[0].avatar);
+  }
   const current = profiles.some((p) => p.id === stored?.current) ? stored.current : 'p1';
   return { profiles, current };
 }
@@ -47,9 +52,20 @@ export function setCurrent(state, id) {
   return state.profiles.some((p) => p.id === id) ? { ...state, current: id } : state;
 }
 
-/** Changes a child's name, colour or game settings (not her id or kind). */
+/** The avatar the other child has, which this child can't pick. */
+export function takenAvatar(state, id) {
+  return state.profiles.find((p) => p.id !== id)?.avatar;
+}
+
+/**
+ * Changes a child's name, avatar or game settings (not her id or kind).
+ * An unknown avatar, or one the other child has, is ignored.
+ */
 export function updateProfile(state, id, patch) {
   const { id: _id, kind: _kind, ...allowed } = patch;
+  if ('avatar' in allowed && (!AVATAR_IDS.includes(allowed.avatar) || allowed.avatar === takenAvatar(state, id))) {
+    delete allowed.avatar;
+  }
   return { ...state, profiles: state.profiles.map((p) => (p.id === id ? { ...p, ...allowed } : p)) };
 }
 

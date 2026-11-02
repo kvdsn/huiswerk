@@ -33,9 +33,13 @@
     <h1>Huiswerk – artwork</h1>
     <p class="note">Everything below is loaded from the app's own code, so it is exactly what the app shows.</p>
     <div class="controls">
-      <button id="happy">Unicorn: happy</button>
-      <button id="encourage">Unicorn: encourage</button>
+      <button id="happy">Mascots: happy</button>
+      <button id="encourage">Mascots: encourage</button>
     </div>
+
+    <h2>Avatars</h2>
+    <p class="note">Each animal without rewards and with all four rewards. Grey ones are still placeholders.</p>
+    <div class="grid mascots" id="avatars"></div>
 
     <h2>Unicorn and page rewards</h2>
     <div class="grid mascots" id="mascots"></div>
@@ -55,7 +59,7 @@
   </main>
 
   <script type="module">
-    import { mountMascot } from '../js/ui/mascot.js';
+    import { mountMascot, AVATARS } from '../js/ui/mascot.js';
     import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from '../js/ui/stickers.js';
 
     const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -71,6 +75,15 @@
       fig.innerHTML = `<div></div><figcaption>${esc(v.label)}${v.code ? `<small>${esc(v.code)}</small>` : ''}</figcaption>`;
       document.getElementById('mascots').append(fig);
       mascots.push(mountMascot(fig.firstElementChild, { wear: v.wear }));
+    }
+
+    for (const a of AVATARS) {
+      for (const [label, wear] of [['zonder beloning', []], ['alles samen', ACCESSORIES.map((acc) => acc.id)]]) {
+        const fig = document.createElement('figure');
+        fig.innerHTML = `<div></div><figcaption>${esc(a.article)} ${esc(a.noun)}${a.placeholder ? ' (placeholder)' : ''}<small>${esc(a.id)} · ${esc(label)}</small></figcaption>`;
+        document.getElementById('avatars').append(fig);
+        mascots.push(mountMascot(fig.firstElementChild, { avatar: a.id, wear }));
+      }
     }
 
     document.getElementById('icons').innerHTML = ACCESSORIES.map((acc) =>

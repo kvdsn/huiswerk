@@ -495,7 +495,24 @@ button {
   user-select: text;
 }
 .kid-name:focus { outline: none; border-color: var(--lilac-deep); }
-.card .field + .chips { margin-top: 14px; }
+.settings .pick-label { margin: 16px 0 8px; }
+.avatar-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.avatar-pick {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 6px 8px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.18);
+  font-size: 16px;
+  font-weight: 600;
+  transition: transform var(--fast) var(--bounce), opacity var(--fast);
+}
+.avatar-pick .avatar-mascot { width: 100%; max-width: 92px; aspect-ratio: 1; height: auto; }
+.avatar-pick:active { transform: scale(0.94); }
+.avatar-pick[aria-pressed='true'] { background: #ede9fe; outline: 3px solid var(--lilac-deep); }
+.avatar-pick[aria-disabled='true'] { opacity: 0.4; color: var(--ink-soft); font-weight: 500; font-size: 14px; }
 
 /* ---------- Toddler games ---------- */
 
