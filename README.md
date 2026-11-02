@@ -1,6 +1,6 @@
 # Huiswerk 🦄
 
-Een oefen-app voor het 2de leerjaar: **dictee** (de app zegt woordjes, het kind schrijft ze op papier) en **rekenen** (de app zegt een som, het kind zegt het antwoord). Een jonger broertje of zusje in de kleuterklas krijgt eigen spelletjes: tellen, memory, kleuren en vormen, en de eigen naam. Elk kind heeft een eigen dier en stickerboek; namen en instellingen blijven op het toestel.
+Een oefen-app voor het 2de leerjaar: **dictee** (de app zegt woordjes, het kind schrijft ze op papier) en **rekenen** (de app zegt een som, het kind zegt het antwoord). Daarnaast **klok lezen** en **geld** (tellen en betalen met euro's). Een jonger broertje of zusje in de kleuterklas krijgt eigen spelletjes: tellen, memory, kleuren en vormen, en de eigen naam. Elk kind heeft een eigen dier en stickerboek; namen en instellingen blijven op het toestel.
 
 A static web app (PWA) in Flemish Dutch. Plain HTML, CSS and ES modules, no build step. See [PLAN.md](PLAN.md) for the full design.
 
@@ -22,7 +22,7 @@ On localhost you can pretend the child said something from the browser console:
 simulateSpeech('klaar')
 ```
 
-To review all artwork (avatars, rewards, stickers, icons), open <http://localhost:8765/tools/artwork.html>. The `tools/` folder is not published.
+To review all artwork (avatars, rewards, stickers, coins and notes, clocks, icons), open <http://localhost:8765/tools/artwork.html>. The `tools/` folder is not published.
 
 ## Tests
 
@@ -41,11 +41,13 @@ npm test
 | `js/profileStore.js` | The two children, stored on the device |
 | `js/stickerStore.js` | Each child's sticker book, stored on the device |
 | `js/recordings.js` | Words recorded in a parent's voice, stored on the device only |
-| `js/logic/` | Voice commands, word rounds, math questions, number parsing, profiles, sticker book rules and toddler games (unit tested) |
+| `js/logic/` | Voice commands, word rounds, math questions, number parsing, telling the time, money, profiles, sticker book rules and toddler games (unit tested) |
 | `js/ui/mascot.js` | The child's animal, its rewards and animations |
 | `js/ui/avatars/` | The 8 animal avatars; see [CONTRACT.md](js/ui/avatars/CONTRACT.md) for adding one |
 | `js/ui/stickers.js` | Sticker and reward artwork |
 | `js/ui/shapes.js` | Shapes for Kleuren en vormen |
+| `js/ui/clock.js` | The clock for Klok lezen |
+| `js/ui/money.js` | Euro coins and notes for Geld |
 | `js/ui/sounds.js` | Answer sounds (Web Audio) |
 | `tools/artwork.html` | Artwork review page (local only) |
 | `sw.js` | Offline cache |

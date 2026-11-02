@@ -49,6 +49,12 @@
 
     <div id="pages"></div>
 
+    <h2>Geld</h2>
+    <div class="grid" id="money"></div>
+
+    <h2>Klok</h2>
+    <div class="grid" id="clocks"></div>
+
     <h2>App icon and background</h2>
     <div class="grid">
       <figure><img src="../assets/icon.svg" alt=""><figcaption>icon.svg</figcaption></figure>
@@ -61,6 +67,10 @@
   <script type="module">
     import { mountMascot, AVATARS } from '../js/ui/mascot.js';
     import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from '../js/ui/stickers.js';
+    import { moneySVG } from '../js/ui/money.js';
+    import { clockSVG } from '../js/ui/clock.js';
+    import { DENOMINATIONS, formatAmount } from '../js/logic/money.js';
+    import { timeWords } from '../js/logic/clock.js';
 
     const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
     const mascots = [];
@@ -95,6 +105,12 @@
         <div class="grid">${page.stickers.map((s) =>
           `<figure>${s.svg}<figcaption>${esc(s.name)}<small>${esc(s.id)}</small></figcaption></figure>`).join('')}</div>`;
     }).join('');
+
+    document.getElementById('money').innerHTML = DENOMINATIONS.map((v) =>
+      `<figure>${moneySVG(v)}<figcaption>${esc(formatAmount(v))}</figcaption></figure>`).join('');
+
+    document.getElementById('clocks').innerHTML = [{ h: 4, m: 0 }, { h: 4, m: 15 }, { h: 4, m: 30 }, { h: 4, m: 45 }, { h: 12, m: 30 }]
+      .map((t) => `<figure>${clockSVG(t)}<figcaption>${esc(timeWords(t))}</figcaption></figure>`).join('');
 
     document.getElementById('happy').onclick = () => mascots.forEach((m) => m.react('happy'));
     document.getElementById('encourage').onclick = () => mascots.forEach((m) => m.react('encourage'));

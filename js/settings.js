@@ -10,6 +10,8 @@ export const DEFAULTS = {
     tables: [1, 2, 3, 4, 5],
     count: 10,
   },
+  clock: { kinds: ['heel', 'half'] },
+  money: { max: 20, cents: false },
   name: '',
   sounds: true,
   voiceURI: '',
@@ -26,6 +28,8 @@ export function loadSettings() {
       ...clone(DEFAULTS),
       ...stored,
       math: { ...clone(DEFAULTS.math), ...stored.math, ops: { ...DEFAULTS.math.ops, ...stored.math?.ops } },
+      clock: { ...clone(DEFAULTS.clock), ...stored.clock },
+      money: { ...clone(DEFAULTS.money), ...stored.money },
     };
   } catch {
     return clone(DEFAULTS);

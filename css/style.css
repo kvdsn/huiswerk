@@ -618,6 +618,69 @@ button {
 .choice.used { opacity: 0; pointer-events: none; }
 .choice.wiggle { animation: wiggle 400ms ease; }
 .name-show { margin: 0; font-size: 56px; font-weight: 700; letter-spacing: 4px; color: var(--ink-soft); }
+
+/* ---------- Klok lezen and Geld ---------- */
+
+.mic[hidden] { display: none; }
+.school-game { gap: 14px; }
+
+.clock-row { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.clock-wrap { width: clamp(220px, min(56vw, 38vh), 420px); aspect-ratio: 1; }
+.clock { width: 100%; height: 100%; display: block; font-family: inherit; }
+.clock .hand { transition: transform 600ms var(--bounce); }
+
+.time-answers { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.time-answer { font-size: 32px; min-width: 200px; }
+
+.money-head { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.money-head .lead { margin: 0; font-size: 34px; font-weight: 700; }
+
+.money-table {
+  --coin: clamp(64px, min(11vw, 9vh), 96px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: min(760px, 100%);
+  min-height: calc(var(--coin) + 32px);
+  padding: 16px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 3px rgba(196, 181, 253, 0.6);
+}
+.money-table.paid { border: 3px dashed var(--lilac); box-shadow: none; }
+.money-table.solution { background: #dcfce7; border-color: var(--mint-deep); }
+.table-hint { color: var(--ink-soft); font-size: 20px; }
+.money-table.crowded { --coin: clamp(54px, 9vh, 80px); gap: 10px; }
+
+.piece {
+  display: block;
+  width: calc(var(--coin) * var(--s));
+  padding: 0;
+  background: none;
+  filter: drop-shadow(0 3px 4px rgba(76, 29, 149, 0.18));
+  animation: pop-in var(--medium) var(--bounce) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition: transform var(--fast) var(--bounce);
+}
+.piece.is-note { width: calc(var(--coin) * 1.75); }
+.piece svg { width: 100%; height: auto; display: block; }
+button.piece:active { transform: scale(0.9); }
+.money-table .piece { animation-delay: 0ms; }
+.money-table:not(.paid) .piece { animation-delay: calc(var(--i, 0) * 60ms); }
+.piece.just-added { animation: count-bounce 320ms var(--bounce); }
+
+.pay-area { display: grid; justify-items: center; gap: 14px; width: 100%; }
+.money-tray {
+  --coin: clamp(60px, min(10vw, 8vh), 88px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: min(760px, 100%);
+}
 .name-slots { display: flex; gap: 10px; }
 .name-slots .slot {
   width: 70px;
@@ -666,6 +729,10 @@ button {
 
 .settings .help-card p { font-size: 20px; line-height: 1.5; color: var(--ink); margin: 0; }
 .help-card { animation: pop-in var(--medium) var(--bounce) both; animation-delay: calc(var(--i, 0) * 50ms); }
+@media (min-width: 760px) {
+  .help { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .help .help-card:last-child { grid-column: 1 / -1; }
+}
 
 /* ---------- Stickers ---------- */
 
@@ -897,7 +964,18 @@ button {
   .reveal > :not(.sticker) { justify-self: start; }
   .center:has(.reveal) .mascot-wrap { width: clamp(100px, 15vh, 230px); }
 
-  .help { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .help { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .help .card { padding: 12px 18px; }
+  .help .card h2 { margin-bottom: 6px; }
+  .settings.help .help-card p { font-size: 16.5px; line-height: 1.35; }
+
+  /* Klok lezen: the answers beside the clock. Geld: the tray beside the table. */
+  .school-game { gap: 10px; }
+  .clock-wrap { width: clamp(200px, 36vh, 320px); }
+  .pay-area { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; }
+  .pay-area .money-table, .pay-area .money-tray { width: 100%; }
+  .pay-area .money-table { min-height: 260px; align-content: center; }
+  .money-table, .money-tray { --coin: clamp(72px, 12vh, 100px); gap: 16px; }
 
   .explain { padding: 10px 16px; }
   .explain p { font-size: 17px; line-height: 1.35; }

@@ -9,6 +9,7 @@ Ideas for later, roughly in order of usefulness. See [PLAN.md](PLAN.md) for what
 - **Short sentences in dictations** — the parent records short sentences with the existing recording feature, and they're dictated like words.
 - **Tafels challenge** — a playful round on one times table, with the mascot cheering more for every right answer in a row. Optional timer.
 - **Number splitting and counting** — "Hoeveel tientallen en eenheden zijn er in 56?", "Wat komt na 79?", counting on/back and by 2, 5 or 10.
+- **Klok zetten and wisselgeld** — the other way round: drag the clock's hands to a given time, or give change from a note.
 - **More toddler games** — Wie zegt wat? (animal names and sounds).
 
 ## Decided against

@@ -2,7 +2,7 @@
 // (so a new version always arrives as one consistent set) and from the cache
 // when the iPad is offline. Other origins (Google Fonts) are left alone.
 
-const CACHE = 'huiswerk-v2';
+const CACHE = 'huiswerk-v3';
 const FILES = [
   './',
   'index.html',
@@ -33,6 +33,10 @@ const FILES = [
   'js/logic/profiles.js',
   'js/logic/kleuter.js',
   'js/ui/shapes.js',
+  'js/logic/clock.js',
+  'js/logic/money.js',
+  'js/ui/clock.js',
+  'js/ui/money.js',
   'data/woordpakketten.json',
   'assets/icon.svg',
   'assets/sparkles.svg',

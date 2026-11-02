@@ -5,6 +5,10 @@ import {
 import { matchCommandInAlternatives } from './logic/commands.js';
 import { buildRound, displayForm, spokenForm, shuffle } from './logic/words.js';
 import { makeQuestions, checkAnswer } from './logic/math.js';
+import { makeClockQuestions, checkTime, timeWords, sameTime } from './logic/clock.js';
+import {
+  makeMoneyQuestions, checkAmount, formatAmount, spokenAmount, fewestPieces, total, isNote,
+} from './logic/money.js';
 import { mountMascot, AVATARS, avatarInfo } from './ui/mascot.js';
 import { playCorrect, playWrong } from './ui/sounds.js';
 import { STICKER_PAGES, ACCESSORIES, ACCESSORY_ICONS } from './ui/stickers.js';
@@ -16,6 +20,8 @@ import {
 import { loadProfiles, saveProfiles } from './profileStore.js';
 import { makeShapeQuestion, makeNameGame, COLOURS } from './logic/kleuter.js';
 import { shapeSVG } from './ui/shapes.js';
+import { clockSVG, setClock } from './ui/clock.js';
+import { moneySVG, pieceScale } from './ui/money.js';
 import {
   recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
   exportRecordings, importRecordings, saveFile,
@@ -98,7 +104,7 @@ function bindBack() {
 }
 
 function go(name, ...args) {
-  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help, tellen, memory, kleuren, mijnNaam };
+  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help, tellen, memory, kleuren, mijnNaam, klok, geld };
   (screens[name] || home)(...args);
 }
 
@@ -162,6 +168,12 @@ function home() {
         </button>
         <button class="tile mint" id="to-rekenen" style="--i:1">
           <span class="emoji">🔢</span>Rekenen<small>Sommen zeggen</small>
+        </button>
+        <button class="tile blue" id="to-klok" style="--i:2">
+          <span class="emoji">🕒</span>Klok lezen<small>Hoe laat is het?</small>
+        </button>
+        <button class="tile sun" id="to-geld" style="--i:3">
+          <span class="emoji">💶</span>Geld<small>Tellen en betalen</small>
         </button>`;
   render(`
     <header class="topbar">
@@ -173,9 +185,9 @@ function home() {
       <div class="mascot-wrap"></div>
       <h2 class="hello rainbow-text">${escape(greeting())}</h2>
       <p class="lead">${kleuter ? 'Wat gaan we spelen?' : 'Wat gaan we vandaag oefenen?'}</p>
-      <div class="menu${kleuter ? ' four' : ''}">
+      <div class="menu four">
         ${tiles}
-        <button class="tile lilac wide-tile" id="to-stickers" style="--i:2">
+        <button class="tile lilac wide-tile" id="to-stickers" style="--i:4">
           <span class="emoji">📒</span>Stickerboek<small>${stickerCount()} stickers verzameld</small>
         </button>
       </div>
@@ -185,6 +197,8 @@ function home() {
   bindAvatars();
   $('#to-dictee')?.addEventListener('click', () => go('dicteeKies'));
   $('#to-rekenen')?.addEventListener('click', () => go('rekenenStart'));
+  $('#to-klok')?.addEventListener('click', () => go('klok'));
+  $('#to-geld')?.addEventListener('click', () => go('geld'));
   $('#to-tellen')?.addEventListener('click', () => go('tellen'));
   $('#to-memory')?.addEventListener('click', () => go('memory'));
   $('#to-kleuren')?.addEventListener('click', () => go('kleuren'));
@@ -580,8 +594,13 @@ function rekenenRun(questions) {
 }
 
 function rekenenResultaat(score, total) {
+  scoreResultaat(score, total, 'rekenenStart', () => rekenenRun(makeQuestions(settings.math, settings.math.count)));
+}
+
+/** Results of a school round: score, a sticker, and "Nog eens" runs `again`. */
+function scoreResultaat(score, total, back, again) {
   render(`
-    ${topbar('Klaar!', 'rekenenStart')}
+    ${topbar('Klaar!', back)}
     <div class="center">
       <div class="mascot-wrap"></div>
       <p class="score rainbow-text">${score} van ${total} meteen goed</p>
@@ -597,8 +616,368 @@ function rekenenResultaat(score, total) {
   const m = mascot();
   setTimeout(() => m.react(score >= total * 0.8 ? 'happy' : 'encourage'), 250);
   giveSticker(score === total, m);
-  $('#again').addEventListener('click', () => rekenenRun(makeQuestions(settings.math, settings.math.count)));
+  $('#again').addEventListener('click', again);
   $('#home').addEventListener('click', () => go('home'));
+}
+
+// ---------- Telling the time and money ----------
+
+const SCHOOL_ROUND = 8;
+const capital = (text) => text[0].toUpperCase() + text.slice(1);
+
+/** Shared by Klok lezen and Geld: shake the feedback line and show a wrong-answer text. */
+function feedbackBad(text) {
+  const feedback = $('.feedback');
+  feedback.className = 'feedback';
+  void feedback.offsetWidth;
+  feedback.className = 'feedback bad';
+  feedback.textContent = text;
+}
+
+function feedbackGood(text) {
+  $('.feedback').className = 'feedback good';
+  $('.feedback').textContent = text;
+}
+
+function klok() {
+  const questions = makeClockQuestions(settings.clock.kinds, SCHOOL_ROUND);
+  const id = render(`
+    ${topbar('Klok lezen')}
+    <div class="center game school-game">
+      <div class="steps">${'<span></span>'.repeat(SCHOOL_ROUND)}</div>
+      <div class="clock-row">
+        <div class="mascot-wrap small"></div>
+        <div class="clock-wrap">${clockSVG()}</div>
+      </div>
+      <p class="lead">Hoe laat is het?</p>
+      <div class="time-answers"></div>
+      <p class="feedback" aria-live="assertive"></p>
+      ${micBadge()}
+      <button class="btn" id="repeat">🔁 Nog eens horen</button>
+    </div>
+  `);
+  bindBack();
+  bindSpeechLog();
+  const m = mascot();
+  const clock = $('.clock');
+
+  let index = 0;
+  let tries = 0;
+  let score = 0;
+  // See rekenenRun.
+  let judging = false;
+  let speechSeq = 0;
+
+  const listener = new Listener({
+    interim: false,
+    continuous: false,
+    onState: (state) => isCurrent(id) && setMic(state),
+    onResult: (alternatives, isFinal) => {
+      if (judging || !isFinal || !isCurrent(id)) return;
+      if (matchCommandInAlternatives(alternatives) === 'repeat') return ask();
+      answer(checkTime(question().answer, alternatives));
+    },
+  });
+  onLeave(() => listener.stop());
+
+  const question = () => questions[index];
+  const buttonFor = (time) => $$('.time-answer').find((btn) => sameTime(question().options[Number(btn.dataset.i)], time));
+
+  function show() {
+    tries = 0;
+    $$('.steps span').forEach((dot, i) => dot.classList.toggle('done', i < index));
+    setClock(clock, question().answer);
+    $('.feedback').className = 'feedback';
+    $('.feedback').textContent = '';
+    $('.time-answers').innerHTML = question().options
+      .map((time, i) => `<button class="choice time-answer" data-i="${i}" style="--i:${i}">${escape(timeWords(time))}</button>`)
+      .join('');
+    $$('.time-answer').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        const time = question().options[Number(btn.dataset.i)];
+        answer({ heard: time, correct: sameTime(time, question().answer) });
+      }),
+    );
+  }
+
+  async function ask() {
+    if (judging) return;
+    const mine = ++speechSeq;
+    listener.stop();
+    await say('Hoe laat is het?');
+    if (!isCurrent(id) || mine !== speechSeq) return;
+    listener.start();
+  }
+
+  async function answer(result) {
+    if (judging) return;
+    if (result.heard === null) {
+      $('.feedback').className = 'feedback';
+      $('.feedback').textContent = 'Ik verstond je niet. Zeg het nog eens?';
+      return;
+    }
+    judging = true;
+    speechSeq++;
+    stopSpeaking();
+    listener.stop();
+    const words = timeWords(question().answer);
+
+    if (result.correct) {
+      if (tries === 0) score++;
+      buttonFor(question().answer)?.classList.add('right');
+      feedbackGood(`Goed zo! Het is ${words}. ⭐`);
+      m.react('happy');
+      soundCorrect();
+      await wait(1200);
+      return isCurrent(id) && advance();
+    }
+
+    tries++;
+    const wrong = buttonFor(result.heard);
+    if (wrong) {
+      wrong.disabled = true;
+      wrong.classList.add('nope');
+    }
+    m.react('encourage');
+    soundWrong();
+    if (tries === 1) {
+      feedbackBad(`${capital(timeWords(result.heard))}? Bijna! Kijk nog eens.`);
+      await wait(700);
+      if (!isCurrent(id)) return;
+      judging = false;
+      listener.start();
+      return;
+    }
+    buttonFor(question().answer)?.classList.add('right');
+    feedbackBad(`Het is ${words}.`);
+    await say(`Het is ${words}.`);
+    await wait(600);
+    if (isCurrent(id)) advance();
+  }
+
+  function advance() {
+    judging = false;
+    index++;
+    if (index >= questions.length) return scoreResultaat(score, questions.length, 'home', () => klok());
+    show();
+    ask();
+  }
+
+  $('#repeat').addEventListener('click', ask);
+  show();
+  ask();
+}
+
+const MAX_ON_TABLE = 12;
+
+const piece = (value, tag = 'span', i = 0) =>
+  `<${tag} class="piece${isNote(value) ? ' is-note' : ''}" data-v="${value}" style="--s:${pieceScale(value).toFixed(2)}; --i:${i}"
+    ${tag === 'button' ? `type="button" aria-label="${escape(formatAmount(value))}"` : ''}>${moneySVG(value)}</${tag}>`;
+
+function geld() {
+  const questions = makeMoneyQuestions(settings.money, SCHOOL_ROUND);
+  const id = render(`
+    ${topbar('Geld')}
+    <div class="center game school-game">
+      <div class="steps">${'<span></span>'.repeat(SCHOOL_ROUND)}</div>
+      <div class="money-head">
+        <div class="mascot-wrap small"></div>
+        <p class="lead prompt"></p>
+      </div>
+      <div class="money-q"></div>
+      <p class="feedback" aria-live="assertive"></p>
+      ${micBadge()}
+      <button class="btn" id="repeat">🔁 Nog eens horen</button>
+    </div>
+  `);
+  bindBack();
+  bindSpeechLog();
+  const m = mascot();
+
+  let index = 0;
+  let tries = 0;
+  let score = 0;
+  // See rekenenRun.
+  let judging = false;
+  let speechSeq = 0;
+  let paid = [];
+
+  // Only "Hoeveel is het?" listens for a spoken amount.
+  const listener = new Listener({
+    interim: false,
+    continuous: false,
+    onState: (state) => isCurrent(id) && setMic(state),
+    onResult: (alternatives, isFinal) => {
+      if (judging || !isFinal || !isCurrent(id) || question().kind !== 'count') return;
+      if (matchCommandInAlternatives(alternatives) === 'repeat') return ask();
+      answerCount(checkAmount(question().answer, alternatives));
+    },
+  });
+  onLeave(() => listener.stop());
+
+  const question = () => questions[index];
+  const prompt = () => (question().kind === 'count'
+    ? { shown: 'Hoeveel geld is dit?', spoken: 'Hoeveel geld is dit?' }
+    : { shown: `Betaal ${formatAmount(question().answer)}`, spoken: `Betaal ${spokenAmount(question().answer)}.` });
+
+  function show() {
+    tries = 0;
+    paid = [];
+    const q = question();
+    $$('.steps span').forEach((dot, i) => dot.classList.toggle('done', i < index));
+    $('.prompt').textContent = prompt().shown;
+    $('.feedback').className = 'feedback';
+    $('.feedback').textContent = '';
+    $('.mic').hidden = q.kind !== 'count';
+    if (q.kind === 'count') {
+      $('.money-q').innerHTML = `
+        <div class="money-table">${q.pieces.map((v, i) => piece(v, 'span', i)).join('')}</div>
+        <form class="answer-form" autocomplete="off" novalidate>
+          <input type="text" inputmode="decimal" aria-label="Hoeveel geld" placeholder="€">
+          <button class="btn primary" type="submit">OK</button>
+        </form>`;
+      $('.answer-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const typed = $('.answer-form input').value.trim();
+        if (typed) answerCount(checkAmount(question().answer, typed));
+      });
+    } else {
+      $('.money-q').innerHTML = `
+        <div class="pay-area">
+          <div class="money-table paid"></div>
+          <div class="money-tray">${q.tray.map((v, i) => piece(v, 'button', i)).join('')}</div>
+        </div>
+        <button class="btn primary big" id="pay">💶 Betalen</button>`;
+      drawPaid();
+      $$('.money-tray .piece').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          if (judging || paid.length >= MAX_ON_TABLE) return;
+          paid.push(Number(btn.dataset.v));
+          drawPaid(true);
+        }),
+      );
+      $('#pay').addEventListener('click', answerPay);
+    }
+  }
+
+  // The money on the table; tap a piece to take it back.
+  function drawPaid(added = false) {
+    const table = $('.money-table.paid');
+    table.innerHTML = paid.length
+      ? paid.map((v, i) => piece(v, 'button', i)).join('')
+      : '<span class="table-hint">Tik op het geld om te betalen.</span>';
+    table.classList.toggle('crowded', paid.length > 8);
+    if (added) table.lastElementChild.classList.add('just-added');
+    table.querySelectorAll('.piece').forEach((btn, i) =>
+      btn.addEventListener('click', () => {
+        if (judging) return;
+        paid.splice(i, 1);
+        drawPaid();
+      }),
+    );
+  }
+
+  async function ask() {
+    if (judging) return;
+    const mine = ++speechSeq;
+    listener.stop();
+    await say(prompt().spoken);
+    if (!isCurrent(id) || mine !== speechSeq || question().kind !== 'count') return;
+    listener.start();
+  }
+
+  async function right() {
+    if (tries === 0) score++;
+    m.react('happy');
+    soundCorrect();
+    await wait(1200);
+    if (isCurrent(id)) advance();
+  }
+
+  async function answerCount(result) {
+    if (judging) return;
+    if (result.heard === null) {
+      $('.feedback').className = 'feedback';
+      $('.feedback').textContent = 'Ik verstond je niet. Zeg het nog eens?';
+      return;
+    }
+    judging = true;
+    speechSeq++;
+    stopSpeaking();
+    listener.stop();
+    const input = $('.answer-form input');
+    input.value = formatAmount(result.heard);
+    const amount = formatAmount(question().answer);
+    if (result.correct) {
+      feedbackGood(`Goed zo! Het is ${amount}. ⭐`);
+      return right();
+    }
+    tries++;
+    m.react('encourage');
+    soundWrong();
+    if (tries === 1) {
+      feedbackBad(`${formatAmount(result.heard)}? Bijna! Tel nog eens.`);
+      await wait(700);
+      if (!isCurrent(id)) return;
+      input.value = '';
+      judging = false;
+      listener.start();
+      return;
+    }
+    feedbackBad(`Het is ${amount}.`);
+    await say(`Het is ${spokenAmount(question().answer)}.`);
+    await wait(600);
+    if (isCurrent(id)) advance();
+  }
+
+  // Three tries: "tel nog eens", then "te veel / te weinig", then the answer.
+  async function answerPay() {
+    if (judging) return;
+    if (!paid.length) {
+      $('.feedback').className = 'feedback';
+      $('.feedback').textContent = 'Tik eerst op het geld.';
+      return;
+    }
+    judging = true;
+    speechSeq++;
+    stopSpeaking();
+    const target = question().answer;
+    const sum = total(paid);
+    if (sum === target) {
+      feedbackGood(`Goed zo! Dat is ${formatAmount(target)}. ⭐`);
+      return right();
+    }
+    tries++;
+    m.react('encourage');
+    soundWrong();
+    const off = sum > target ? 'te veel' : 'te weinig';
+    if (tries < 3) {
+      feedbackBad(tries === 1 ? 'Bijna! Tel nog eens.' : `Dat is ${off}. Probeer nog eens.`);
+      await wait(700);
+      if (isCurrent(id)) judging = false;
+      return;
+    }
+    paid = fewestPieces(target, question().tray);
+    drawPaid();
+    $('.money-table.paid').classList.add('solution');
+    feedbackBad(`Dat was ${off}. Zo kan het.`);
+    await say(`Dat was ${off}. Zo betaal je ${spokenAmount(target)}.`);
+    await wait(1200);
+    if (isCurrent(id)) advance();
+  }
+
+  function advance() {
+    judging = false;
+    index++;
+    if (index >= questions.length) return scoreResultaat(score, questions.length, 'home', () => geld());
+    show();
+    ask();
+  }
+
+  $('#repeat').addEventListener('click', ask);
+  show();
+  ask();
 }
 
 // ---------- Settings ----------
@@ -667,6 +1046,18 @@ async function instellingen(kidId = profiles.current) {
         ${chips('tables', range(1, 10), (v) => settings.math.tables.includes(v))}
         <p style="margin-top:16px">Aantal vragen</p>
         ${chips('count', [5, 10, 15, 20], (v) => settings.math.count === v)}
+      </div>
+      <div class="card">
+        <h2>🕒 Klok lezen</h2>
+        <p>Welke uren komen er?</p>
+        ${chips('clock', ['heel', 'half', 'kwart'], (v) => settings.clock.kinds.includes(v), (v) => ({ heel: 'Hele uren', half: 'Halve uren', kwart: 'Kwartieren' })[v])}
+      </div>
+      <div class="card">
+        <h2>💶 Geld</h2>
+        <p>Bedragen tot</p>
+        ${chips('moneyMax', [10, 20, 50, 100], (v) => settings.money.max === v, (v) => `€ ${v}`)}
+        <p style="margin-top:16px">Centen</p>
+        ${chips('cents', ['zonder', 'met'], (v) => settings.money.cents === (v === 'met'), (v) => (v === 'met' ? 'Met centen' : 'Hele euro’s'))}
       </div>` : `
       <div class="card">
         <h2>🧸 Spelletjes</h2>
@@ -745,6 +1136,14 @@ async function instellingen(kidId = profiles.current) {
         const ops = { ...settings.math.ops, [value]: !settings.math.ops[value] };
         if (!Object.values(ops).some(Boolean)) return;
         update((s) => { s.math.ops = ops; });
+      } else if (name === 'clock') {
+        const kinds = ['heel', 'half', 'kwart'].filter((k) => (k === value) !== settings.clock.kinds.includes(k));
+        if (!kinds.length) return;
+        update((s) => { s.clock.kinds = kinds; });
+      } else if (name === 'moneyMax') {
+        update((s) => { s.money.max = value; });
+      } else if (name === 'cents') {
+        update((s) => { s.money.cents = value === 'met'; });
       } else if (name === 'max' || name === 'count') {
         update((s) => { s.math[name] = value; });
       } else if (name === 'sounds') {
@@ -759,6 +1158,9 @@ async function instellingen(kidId = profiles.current) {
         max: (v) => settings.math.max === v,
         count: (v) => settings.math.count === v,
         sounds: (v) => settings.sounds === (v === 'aan'),
+        clock: (v) => settings.clock.kinds.includes(v),
+        moneyMax: (v) => settings.money.max === v,
+        cents: (v) => settings.money.cents === (v === 'met'),
       }[name];
       group.querySelectorAll('.chip').forEach((c) => {
         const v = Number.isNaN(Number(c.dataset.value)) ? c.dataset.value : Number(c.dataset.value);
@@ -1302,6 +1704,18 @@ const HELP = [
       Was het fout? Dan mag je nog een keer proberen.`,
   },
   {
+    icon: '🕒',
+    title: 'Klok lezen',
+    text: `Kijk naar de klok. De kleine wijzer wijst het uur, de grote wijzer de minuten.
+      Tik op het juiste uur, of zeg het, bijvoorbeeld “half vijf”.`,
+  },
+  {
+    icon: '💶',
+    title: 'Geld',
+    text: `Hoeveel geld ligt er? Tel het en zeg of typ het bedrag.
+      Moet je betalen? Tik op munten en briefjes tot je genoeg hebt, en tik op “Betalen”.`,
+  },
+  {
     icon: '🎤',
     title: 'Praten met de app',
     text: `Als je het groene bolletje ziet bij “Ik luister”, mag je praten.
@@ -1312,7 +1726,7 @@ const HELP = [
   {
     icon: '📒',
     title: 'Stickers',
-    text: `Na elk dictee en elke rekenronde krijg je een envelop met een sticker.
+    text: `Na elk dictee, elke rekenronde en elk spelletje krijg je een envelop met een sticker.
       Alles juist? Dan krijg je een glittersticker.
       Is een pagina in je stickerboek vol, dan krijgt je diertje een verrassing.
       Bij “Mijn diertje” kies je wat je diertje bij zich heeft.`,
@@ -1330,7 +1744,7 @@ function help() {
         </div>`).join('')}
       <div class="card help-card">
         <h2>🧑‍🧒 Voor ouders</h2>
-        <p>Bij ⚙️ Instellingen kies je de woordpakketten, de soort sommen, de naam, de stem en de geluidjes.
+        <p>Bij ⚙️ Instellingen kies je de woordpakketten, de soort sommen, de klok, het geld, de naam, de stem en de geluidjes.
           Je kan er ook de woordjes zelf inspreken, en je opnames bewaren in een reservekopie.</p>
       </div>
     </div>
