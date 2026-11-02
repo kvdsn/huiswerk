@@ -173,7 +173,7 @@ function home() {
       <div class="mascot-wrap"></div>
       <h2 class="hello rainbow-text">${escape(greeting())}</h2>
       <p class="lead">${kleuter ? 'Wat gaan we spelen?' : 'Wat gaan we vandaag oefenen?'}</p>
-      <div class="menu">
+      <div class="menu${kleuter ? ' four' : ''}">
         ${tiles}
         <button class="tile lilac wide-tile" id="to-stickers" style="--i:2">
           <span class="emoji">📒</span>Stickerboek<small>${stickerCount()} stickers verzameld</small>
@@ -410,8 +410,8 @@ function dicteeResultaat(round, mistakes, title) {
       <div class="row">
         ${mistakes.length ? '<button class="btn primary big" id="again-wrong">Foutjes nog eens oefenen</button>' : ''}
         <button class="btn mint big" id="again">Nog een dictee</button>
+        <button class="btn" id="home">🏠 Naar het begin</button>
       </div>
-      <button class="btn" id="home">🏠 Naar het begin</button>
     </div>
   `);
   bindBack();
@@ -1322,7 +1322,7 @@ const HELP = [
 function help() {
   render(`
     ${topbar('Hoe werkt het?')}
-    <div class="settings">
+    <div class="settings help">
       ${HELP.map((part, i) => `
         <div class="card help-card" style="--i:${i}">
           <h2>${part.icon} ${escape(part.title)}</h2>
@@ -1407,9 +1407,11 @@ function stickerboek(pageId) {
     <div class="chips page-tabs" role="tablist"></div>
     <div class="card album-page">
       <div class="sticker-grid"></div>
-      <div class="page-reward"></div>
+      <div class="album-side">
+        <div class="page-reward"></div>
+        <button class="btn primary big" id="to-wardrobe">🐾 Mijn ${pet()}</button>
+      </div>
     </div>
-    <div class="row"><button class="btn primary big" id="to-wardrobe">🐾 Mijn ${pet()}</button></div>
   `);
   bindBack();
 

@@ -144,12 +144,13 @@ body {
 
 /* ---------- Mascot ---------- */
 
+/* Sized by height too, so screens fit on an iPad held sideways. */
 .mascot-wrap {
-  width: clamp(150px, 26vw, 230px);
+  width: clamp(120px, min(26vw, 22vh), 230px);
   aspect-ratio: 1;
 }
 
-.mascot-wrap.small { width: clamp(96px, 16vw, 140px); }
+.mascot-wrap.small { width: clamp(80px, min(16vw, 13vh), 140px); }
 
 .mascot-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
@@ -681,6 +682,10 @@ button {
 
 
 .menu .wide-tile { grid-column: 1 / -1; min-height: 110px; flex-direction: row; gap: 16px; }
+@media (min-width: 900px) {
+  .menu.four { grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(900px, 100%); }
+  .menu.four .tile { padding: 20px 12px; }
+}
 .menu .wide-tile small { display: block; }
 .mascot-wrap.big { width: clamp(200px, 36vw, 300px); }
 
@@ -748,6 +753,7 @@ button {
 }
 .sticker-grid figure { margin: 0; display: grid; gap: 4px; justify-items: center; animation: pop-in var(--medium) var(--bounce) both; animation-delay: calc(var(--i, 0) * 30ms); }
 .sticker-grid figcaption { font-size: 17px; font-weight: 600; text-align: center; }
+.album-side { display: grid; justify-items: center; gap: 18px; }
 .page-reward { display: flex; align-items: center; justify-content: center; gap: 14px; text-align: left; }
 .page-reward p { margin: 0; font-size: 19px; color: var(--ink-soft); }
 .acc-icon { width: 64px; flex: none; }
@@ -859,6 +865,46 @@ button {
 .note strong { display: block; margin-bottom: 6px; font-weight: 600; }
 .note ul { margin: 0; padding-left: 20px; }
 .note li + li { margin-top: 4px; }
+
+/* Not quite room for everything (e.g. Safari's toolbars on an iPad). */
+@media (max-height: 1100px) {
+  .check-list { gap: 8px 12px; }
+  .check-item { padding: 4px 8px 4px 12px; gap: 8px; border-radius: 16px; }
+  .check-item .word { font-size: 26px; }
+  .check-item .mark { width: 44px; height: 44px; }
+
+  .help .card { padding: 18px 22px; }
+  .settings.help .help-card p { font-size: 18px; line-height: 1.4; }
+
+  .sticker-grid { width: min(520px, 100%, 100dvh - 630px); }
+}
+
+/* iPad held sideways: little height, plenty of width. */
+@media (orientation: landscape) and (max-height: 1050px) {
+  #app {
+    max-width: 1140px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .screen { gap: 14px; }
+  .center { gap: 16px; }
+  .tile { min-height: 120px; }
+  .menu .wide-tile { min-height: 90px; }
+
+  /* The revealed sticker sits beside its text, and the mascot makes room. */
+  .reveal { grid-template-columns: auto auto; align-items: center; column-gap: 20px; text-align: left; }
+  .reveal .sticker { grid-row: span 4; width: 120px; }
+  .reveal > :not(.sticker) { justify-self: start; }
+  .center:has(.reveal) .mascot-wrap { width: clamp(100px, 15vh, 230px); }
+
+  .help { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+  .explain { padding: 10px 16px; }
+  .explain p { font-size: 17px; line-height: 1.35; }
+  .album-page { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 28px; padding: 20px 28px; }
+  .sticker-grid { width: clamp(300px, 100dvh - 410px, 520px); gap: 14px; }
+  .sticker-grid figcaption { font-size: 16px; }
+}
 
 @media (max-width: 600px) {
   .btn.big { min-height: 72px; font-size: 26px; }
