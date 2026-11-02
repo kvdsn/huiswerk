@@ -13,11 +13,11 @@ describe('profiles', () => {
     assert.equal(currentProfile(state).palette, 'roze');
   });
 
-  test('adding a toddler gives a new id, mint colours and game defaults', () => {
+  test('adding a toddler gives a new id, purple colours and game defaults', () => {
     const { state, profile } = addProfile(defaultProfiles('Liv'));
     assert.equal(profile.id, 'p2');
     assert.equal(profile.kind, 'kleuter');
-    assert.equal(profile.palette, 'mint');
+    assert.equal(profile.palette, 'paars');
     assert.equal(profile.tellenMax, 5);
     assert.equal(profile.memoryCards, 6);
     assert.equal(state.profiles.length, 2);
@@ -44,7 +44,7 @@ describe('profiles', () => {
   test('changing kind switches to that kind\'s colours unless chosen', () => {
     const { state } = addProfile(defaultProfiles());
     assert.equal(updateProfile(state, 'p2', { kind: 'school' }).profiles[1].palette, 'roze');
-    assert.equal(updateProfile(state, 'p2', { kind: 'school', palette: 'mint' }).profiles[1].palette, 'mint');
+    assert.equal(updateProfile(state, 'p2', { kind: 'school', palette: 'paars' }).profiles[1].palette, 'paars');
     assert.equal(updateProfile(state, 'p2', { name: 'Zus' }).profiles[1].name, 'Zus');
   });
 
@@ -65,6 +65,11 @@ describe('profiles', () => {
       { ...state.profiles[1] },
       { id: 'p2', name: '', kind: 'school', palette: 'roze', tellenMax: 5, memoryCards: 6 },
     );
+  });
+
+  test('the old mint colour becomes purple', () => {
+    const state = cleanProfiles({ profiles: [{ id: 'p1', kind: 'school' }, { id: 'p2', kind: 'kleuter', palette: 'mint' }], current: 'p2' });
+    assert.equal(state.profiles[1].palette, 'paars');
   });
 
   test('the first child keeps the original sticker book', () => {

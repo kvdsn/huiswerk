@@ -1,18 +1,18 @@
 // Children using the app. Pure functions on a plain state object:
 //   state = { profiles: [profile], current: profileId }
-//   profile = { id, name, kind: 'school' | 'kleuter', palette: 'roze' | 'mint',
+//   profile = { id, name, kind: 'school' | 'kleuter', palette: 'roze' | 'paars',
 //               tellenMax: 5 | 10, memoryCards: 6 | 8 | 12 }
 // The first child keeps the id 'p1', so her existing sticker book stays hers.
 
 const KINDS = ['school', 'kleuter'];
-const PALETTES = ['roze', 'mint'];
+const PALETTES = ['roze', 'paars'];
 
 function makeProfile(id, { name = '', kind = 'school', palette } = {}) {
   return {
     id,
     name,
     kind,
-    palette: palette || (kind === 'kleuter' ? 'mint' : 'roze'),
+    palette: palette || (kind === 'kleuter' ? 'paars' : 'roze'),
     tellenMax: 5,
     memoryCards: 6,
   };
@@ -35,7 +35,8 @@ export function cleanProfiles(stored, legacyName = '') {
     profiles.push({
       ...makeProfile(p.id, { kind }),
       name: typeof p.name === 'string' ? p.name : '',
-      palette: PALETTES.includes(p.palette) ? p.palette : kind === 'kleuter' ? 'mint' : 'roze',
+      // 'mint' was the first colour for a second child; it became 'paars'.
+      palette: p.palette === 'mint' ? 'paars' : PALETTES.includes(p.palette) ? p.palette : kind === 'kleuter' ? 'paars' : 'roze',
       tellenMax: [5, 10].includes(p.tellenMax) ? p.tellenMax : 5,
       memoryCards: [6, 8, 12].includes(p.memoryCards) ? p.memoryCards : 6,
     });
@@ -77,7 +78,7 @@ export function updateProfile(state, id, patch) {
       if (p.id !== id) return p;
       const next = { ...p, ...patch };
       // A new kind gets that kind's default colours unless chosen in the same change.
-      if (patch.kind && patch.kind !== p.kind && !patch.palette) next.palette = patch.kind === 'kleuter' ? 'mint' : 'roze';
+      if (patch.kind && patch.kind !== p.kind && !patch.palette) next.palette = patch.kind === 'kleuter' ? 'paars' : 'roze';
       return next;
     }),
   };

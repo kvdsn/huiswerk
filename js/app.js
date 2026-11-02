@@ -14,6 +14,8 @@ import {
   currentProfile, setCurrent, addProfile, removeProfile, updateProfile, stickerKey,
 } from './logic/profiles.js';
 import { loadProfiles, saveProfiles } from './profileStore.js';
+import { makeShapeQuestion, makeNameGame, COLOURS } from './logic/kleuter.js';
+import { shapeSVG } from './ui/shapes.js';
 import {
   recordingKey, saveRecording, recordedKeys, loadUrls, revokeUrls, playUrl, stopPlayback, canRecord, Recorder,
   exportRecordings, importRecordings, saveFile,
@@ -91,7 +93,7 @@ function bindBack() {
 }
 
 function go(name, ...args) {
-  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help, tellen, memory };
+  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help, tellen, memory, kleuren, mijnNaam };
   (screens[name] || home)(...args);
 }
 
@@ -143,6 +145,12 @@ function home() {
         </button>
         <button class="tile blue" id="to-memory" style="--i:1">
           <span class="emoji">🃏</span>Memory<small>Zoek de twee dezelfde</small>
+        </button>
+        <button class="tile pink" id="to-kleuren" style="--i:2">
+          <span class="emoji">🎨</span>Kleuren en vormen<small>Tik op de gele ster</small>
+        </button>
+        <button class="tile mint" id="to-naam" style="--i:3">
+          <span class="emoji">🔤</span>Mijn naam<small>Ken je je naam?</small>
         </button>`
     : `<button class="tile pink" id="to-dictee" style="--i:0">
           <span class="emoji">✏️</span>Dictee<small>Woordjes schrijven</small>
@@ -174,6 +182,8 @@ function home() {
   $('#to-rekenen')?.addEventListener('click', () => go('rekenenStart'));
   $('#to-tellen')?.addEventListener('click', () => go('tellen'));
   $('#to-memory')?.addEventListener('click', () => go('memory'));
+  $('#to-kleuren')?.addEventListener('click', () => go('kleuren'));
+  $('#to-naam')?.addEventListener('click', () => go('mijnNaam'));
   $('#to-stickers').addEventListener('click', () => go('stickerboek'));
   $('#to-settings').addEventListener('click', () => go('instellingen'));
   $('#to-help').addEventListener('click', () => go('help'));
@@ -838,7 +848,7 @@ function kidCard(p) {
         ${profiles.profiles.length > 1 ? '<button class="icon-btn kid-remove" aria-label="Kind verwijderen">🗑️</button>' : ''}
       </div>
       <div class="chips">${chip('kind', 'school', '🎒 Schoolkind')}${chip('kind', 'kleuter', '🧸 Kleuter')}</div>
-      <div class="chips">${chip('palette', 'roze', '🩷 Roze eenhoorn')}${chip('palette', 'mint', '🩵 Mint eenhoorn')}</div>
+      <div class="chips">${chip('palette', 'roze', '🩷 Roze eenhoorn')}${chip('palette', 'paars', '💜 Paarse eenhoorn')}</div>
       ${p.kind === 'kleuter' ? `
         <p class="kid-label">Tellen tot</p>
         <div class="chips">${chip('tellenMax', 5, '5')}${chip('tellenMax', 10, '10')}</div>
@@ -1050,6 +1060,189 @@ function memory() {
       lock = false;
     }),
   );
+}
+
+function kleuren() {
+  const QUESTIONS = 5;
+  const id = render(`
+    ${topbar('Kleuren en vormen')}
+    <div class="center game">
+      <div class="steps">${'<span></span>'.repeat(QUESTIONS)}</div>
+      <div class="mascot-wrap small"></div>
+      <p class="lead prompt"></p>
+      <div class="shape-grid"></div>
+      <button class="btn" id="repeat">🔁 Nog eens horen</button>
+    </div>
+  `);
+  bindBack();
+  const m = mascot();
+  let index = 0;
+  let perfect = true;
+  let question = null;
+
+  function ask() {
+    question = makeShapeQuestion();
+    let busy = false;
+    $$('.steps span').forEach((dot, i) => dot.classList.toggle('done', i < index));
+    $('.prompt').textContent = question.prompt;
+    $('.shape-grid').innerHTML = question.items
+      .map((item, i) => `<button class="shape-btn" data-i="${i}" style="--i:${i}"
+          aria-label="${item.colour} ${item.shape}">${shapeSVG(item.shape, COLOURS.find((c) => c.id === item.colour).hex)}</button>`)
+      .join('');
+    say(question.prompt);
+    $$('.shape-btn').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        if (busy || btn.disabled) return;
+        if (!question.items[Number(btn.dataset.i)].target) {
+          perfect = false;
+          btn.disabled = true;
+          btn.classList.add('nope');
+          m.react('encourage');
+          say(`Probeer nog eens. ${question.prompt}`);
+          return;
+        }
+        busy = true;
+        btn.classList.add('right');
+        soundCorrect();
+        m.react('happy');
+        await say('Goed zo!');
+        await wait(300);
+        if (!isCurrent(id)) return;
+        index++;
+        if (index >= QUESTIONS) kleuterResultaat('kleuren', perfect);
+        else ask();
+      }),
+    );
+  }
+  $('#repeat').addEventListener('click', () => question && say(question.prompt));
+  ask();
+}
+
+function mijnNaam() {
+  const game = makeNameGame(child().name);
+  if (!game) {
+    render(`
+      ${topbar('Mijn naam')}
+      <div class="center">
+        <div class="mascot-wrap"></div>
+        <p class="lead">Ik ken je naam nog niet!</p>
+        <p class="hint">Vraag een grote om je naam in te vullen bij ⚙️ Instellingen → Kinderen.</p>
+      </div>
+    `);
+    bindBack();
+    mascot();
+    say('Ik ken je naam nog niet! Vraag een grote om je naam in te vullen.');
+    return;
+  }
+
+  const id = render(`
+    ${topbar('Mijn naam')}
+    <div class="center game">
+      <div class="steps">${'<span></span>'.repeat(3)}</div>
+      <div class="mascot-wrap small"></div>
+      <p class="lead prompt"></p>
+      <div class="name-step"></div>
+      <button class="btn" id="repeat">🔁 Nog eens horen</button>
+    </div>
+  `);
+  bindBack();
+  const m = mascot();
+  let perfect = true;
+  let spoken = '';
+  const ask = (text) => {
+    spoken = text;
+    $('.prompt').textContent = text;
+    say(text);
+  };
+  const setStep = (n) => $$('.steps span').forEach((dot, i) => dot.classList.toggle('done', i < n));
+  const miss = (btn, retry) => {
+    perfect = false;
+    btn.disabled = true;
+    btn.classList.add('nope');
+    m.react('encourage');
+    say(`Probeer nog eens. ${retry}`);
+  };
+  const success = async (text) => {
+    soundCorrect();
+    m.react('happy');
+    await say(text);
+    await wait(300);
+    return isCurrent(id);
+  };
+
+  // 1. Which name is yours?
+  function stepNames() {
+    setStep(0);
+    ask('Welke naam is van jou?');
+    $('.name-step').innerHTML = `<div class="choices">${game.names
+      .map((n) => `<button class="choice name-card" data-name="${escape(n)}">${escape(n)}</button>`).join('')}</div>`;
+    let busy = false;
+    $$('.name-card').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        if (busy || btn.disabled) return;
+        if (btn.dataset.name !== game.name) return miss(btn, 'Welke naam is van jou?');
+        busy = true;
+        btn.classList.add('right');
+        if (await success(`Ja! Dat is jouw naam: ${game.name}.`)) stepFirst();
+      }),
+    );
+  }
+
+  // 2. Which letter does your name start with?
+  function stepFirst() {
+    setStep(1);
+    ask('Met welke letter begint jouw naam?');
+    $('.name-step').innerHTML = `
+      <p class="name-show">${escape(game.name)}</p>
+      <div class="choices">${game.firstOptions
+        .map((l) => `<button class="choice letter-card" data-letter="${escape(l)}">${escape(l)}</button>`).join('')}</div>`;
+    let busy = false;
+    $$('.letter-card').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        if (busy || btn.disabled) return;
+        if (btn.dataset.letter !== game.first) return miss(btn, 'Met welke letter begint jouw naam?');
+        busy = true;
+        btn.classList.add('right');
+        if (await success(`Ja! ${game.name} begint met de letter ${game.first}.`)) stepBuild();
+      }),
+    );
+  }
+
+  // 3. Put your name together.
+  function stepBuild() {
+    setStep(2);
+    ask('Leg je naam! Tik op de letters, van links naar rechts.');
+    $('.name-step').innerHTML = `
+      <div class="name-slots">${game.letters.map((l) => `<span class="slot">${escape(l)}</span>`).join('')}</div>
+      <div class="choices tiles">${game.tiles
+        .map((t) => `<button class="choice letter-card tile-letter" data-letter="${escape(t.letter)}">${escape(t.letter)}</button>`).join('')}</div>`;
+    let next = 0;
+    let busy = false;
+    $$('.tile-letter').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        if (busy || btn.disabled) return;
+        if (btn.dataset.letter !== game.letters[next]) {
+          perfect = false;
+          btn.classList.remove('wiggle');
+          void btn.offsetWidth;
+          btn.classList.add('wiggle');
+          say('Die komt nog niet. Welke letter komt nu?');
+          return;
+        }
+        btn.disabled = true;
+        btn.classList.add('used');
+        $$('.slot')[next].classList.add('filled');
+        next++;
+        if (next < game.letters.length) return;
+        busy = true;
+        setStep(3);
+        if (await success(`Goed zo! Zo schrijf je ${game.name}.`)) kleuterResultaat('mijnNaam', perfect);
+      }),
+    );
+  }
+
+  $('#repeat').addEventListener('click', () => spoken && say(spoken));
+  stepNames();
 }
 
 function kleuterResultaat(again, perfect) {

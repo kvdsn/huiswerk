@@ -6,11 +6,13 @@
 //   m.react('encourage');  // gentle nod (~500 ms)
 //   m.wear(['regenboog', 'konijntje']); // accessories: regenboog, schelpenkroon, konijntje, planeet
 //   mountMascot(el, { wear: ['planeet'] }); // start with accessories on
-//   mountMascot(el, { palette: 'mint' });   // colour variant: 'roze' (default) or 'mint'
+//   mountMascot(el, { palette: 'paars' });  // colour variant: 'roze' (default) or 'paars' ('mint' = old alias for 'paars')
 //   m.palette('roze');     // switch colours live
 
 export const MASCOT_ACCESSORIES = ['regenboog', 'schelpenkroon', 'konijntje', 'planeet'];
-export const MASCOT_PALETTES = ['roze', 'mint']; // 'roze' = the original look; 'mint' = mint/sky-blue sister
+export const MASCOT_PALETTES = ['roze', 'paars']; // 'roze' = the original look; 'paars' = purple/lilac sister
+// old names still accepted (saved data), not offered as choices
+const PALETTE_ALIASES = { mint: 'paars' };
 
 // Accessories are always in the SVG but hidden until they get the class
 // "is-worn". Each lives in the group it should move with.
@@ -196,24 +198,24 @@ export const mascotCSS = `
 .mascot .acc-bunny,
 .mascot .acc-bunny-ear { transform-box: fill-box; transform-origin: 50% 100%; }
 
-/* palette "mint": the sister unicorn. "roze" is the markup's own colours.
-   CSS fill/stroke beat the presentation attributes; the gradients get
+/* palette "paars": the purple/lilac sister unicorn. "roze" is the markup's own
+   colours. CSS fill/stroke beat the presentation attributes; the gradients get
    per-instance ids in mountMascot so their stops can be recoloured too. */
-.mascot.palette-mint .m-line { stroke: #8fc3dc; }
-.mascot.palette-mint .m-skin-s2 { stop-color: #eef8fa; }
-.mascot.palette-mint .m-c1 { fill: #9fe8c8; stroke: #5fc4a0; }
-.mascot.palette-mint .m-c2 { fill: #a9d8f8; stroke: #74b2e2; }
-.mascot.palette-mint .m-c4 { fill: #d9c6fa; stroke: #b49ae0; }
-.mascot.palette-mint .m-sparkle { fill: #bfeee0; }
-.mascot.palette-mint .m-hoof { fill: #a9d8f2; }
-.mascot.palette-mint .m-ear { fill: #bfe6fb; }
-.mascot.palette-mint .m-cheek { fill: #9fdcf2; }
-.mascot.palette-mint .m-muzzle { fill: #e2f5f3; }
-.mascot.palette-mint .m-nostril { fill: #7fbfc4; }
-.mascot.palette-mint .m-mouth { stroke: #4f7f99; }
-.mascot.palette-mint .m-horn { stroke: #86a9cf; }
-.mascot.palette-mint .m-horn-s1 { stop-color: #ffffff; }
-.mascot.palette-mint .m-horn-s2 { stop-color: #b9d3f0; }
+.mascot.palette-paars .m-line { stroke: #b49ad9; }
+.mascot.palette-paars .m-skin-s2 { stop-color: #f4effd; }
+.mascot.palette-paars .m-c1 { fill: #b38cf0; stroke: #8d62d4; }
+.mascot.palette-paars .m-c2 { fill: #d2bcfa; stroke: #a283de; }
+.mascot.palette-paars .m-c4 { fill: #f2c6ee; stroke: #cf96d3; }
+.mascot.palette-paars .m-sparkle { fill: #e0cffb; }
+.mascot.palette-paars .m-hoof { fill: #cdb6f4; }
+.mascot.palette-paars .m-ear { fill: #ddcbfa; }
+.mascot.palette-paars .m-cheek { fill: #e8a6dc; }
+.mascot.palette-paars .m-muzzle { fill: #f1e8fd; }
+.mascot.palette-paars .m-nostril { fill: #b28ed2; }
+.mascot.palette-paars .m-mouth { stroke: #7d52a3; }
+.mascot.palette-paars .m-horn { stroke: #9c88cf; }
+.mascot.palette-paars .m-horn-s1 { stop-color: #ffffff; }
+.mascot.palette-paars .m-horn-s2 { stop-color: #cdbdf2; }
 
 @media (prefers-reduced-motion: no-preference) {
   .mascot .acc-rainbow { animation: mascot-shimmer 7s ease-in-out infinite; }
@@ -348,7 +350,8 @@ export function mountMascot(container, { wear = [], palette = 'roze' } = {}) {
   setWorn(wear);
 
   function setPalette(name) {
-    const p = MASCOT_PALETTES.includes(name) ? name : 'roze';
+    const n = PALETTE_ALIASES[name] ?? name;
+    const p = MASCOT_PALETTES.includes(n) ? n : 'roze';
     for (const id of MASCOT_PALETTES) el.classList.toggle(`palette-${id}`, id === p);
   }
   setPalette(palette);
