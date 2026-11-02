@@ -599,7 +599,7 @@ async function instellingen() {
       <div class="card">
         <h2>📒 Stickerboek</h2>
         <p>${stickerCount()} van ${STICKER_PAGES.reduce((n, p) => n + p.stickers.length, 0)} stickers verzameld.
-          Wissen begint het stickerboek opnieuw; ook de accessoires van de eenhoorn verdwijnen.</p>
+          Wissen begint het stickerboek opnieuw; ook de verrassingen van de eenhoorn verdwijnen.</p>
         <button class="btn" id="reset-stickers">🗑️ Stickerboek wissen</button>
       </div>
       <div class="card">
@@ -712,7 +712,7 @@ async function instellingen() {
   $('#test-voice').addEventListener('click', () => say(`${greeting()} Het woord is: de regenboog.`));
   $('#to-record').addEventListener('click', () => go('inspreken'));
   $('#reset-stickers').addEventListener('click', () => {
-    if (!window.confirm('Alle stickers en accessoires wissen? Dit kan je niet ongedaan maken.')) return;
+    if (!window.confirm('Alle stickers en verrassingen van de eenhoorn wissen? Dit kan je niet ongedaan maken.')) return;
     book = resetBook();
     instellingen();
   });
@@ -815,7 +815,7 @@ function giveSticker(perfect, m) {
         <p class="lead">Je kreeg <b>${escape(sticker.name)}</b>!</p>
         ${result.sticker.glitter ? '<p class="hint">✨ Een glittersticker, omdat alles juist was!</p>' : ''}
         ${acc ? `<p class="lead unlock">De pagina ${escape(page.title)} is vol! Je eenhoorn krijgt <b>${escape(acc.name)}</b>.</p>` : ''}
-        <button class="btn ${acc ? 'primary' : ''}" id="reward-go">${acc ? '👗 Eenhoorn aankleden' : '📒 Naar je stickerboek'}</button>
+        <button class="btn ${acc ? 'primary' : ''}" id="reward-go">${acc ? '🦄 Naar je eenhoorn' : '📒 Naar je stickerboek'}</button>
       </div>`;
     soundCorrect();
     m.react('happy');
@@ -835,7 +835,7 @@ function stickerboek(pageId) {
       <div class="sticker-grid"></div>
       <div class="page-reward"></div>
     </div>
-    <div class="row"><button class="btn primary big" id="to-wardrobe">👗 Eenhoorn aankleden</button></div>
+    <div class="row"><button class="btn primary big" id="to-wardrobe">🦄 Mijn eenhoorn</button></div>
   `);
   bindBack();
 
@@ -857,7 +857,7 @@ function stickerboek(pageId) {
     const full = isPageComplete(book, page);
     $('.page-reward').innerHTML = acc
       ? `<div class="acc-icon${full ? '' : ' locked'}">${ACCESSORY_ICONS[acc.id]}</div>
-         <p>${full ? `Pagina vol! Je eenhoorn mag <b>${escape(acc.name)}</b> dragen.` : `Maak de pagina vol, dan krijgt je eenhoorn <b>${escape(acc.name)}</b>.`}</p>`
+         <p>${full ? `Pagina vol! Je eenhoorn kreeg <b>${escape(acc.name)}</b>.` : `Maak de pagina vol, dan krijgt je eenhoorn <b>${escape(acc.name)}</b>.`}</p>`
       : '';
     $$('.page-tabs .chip').forEach((chip) =>
       chip.addEventListener('click', () => showPage(STICKER_PAGES.find((p) => p.id === chip.dataset.page))),
@@ -870,7 +870,7 @@ function stickerboek(pageId) {
 
 function aankleden() {
   render(`
-    ${topbar('Eenhoorn aankleden', 'stickerboek')}
+    ${topbar('Mijn eenhoorn', 'stickerboek')}
     <div class="center">
       <div class="mascot-wrap big"></div>
       <div class="wardrobe"></div>
@@ -892,8 +892,8 @@ function aankleden() {
       </button>`;
     }).join('');
     $('#wardrobe-hint').textContent = unlocked.length
-      ? 'Tik om iets aan of uit te doen.'
-      : 'Maak een stickerpagina vol om je eerste accessoire te krijgen!';
+      ? 'Tik om iets bij je eenhoorn te zetten of weg te halen.'
+      : 'Maak een stickerpagina vol, dan krijgt je eenhoorn een verrassing!';
     $$('.wardrobe-item').forEach((btn) =>
       btn.addEventListener('click', () => {
         const acc = ACCESSORIES.find((a) => a.id === btn.dataset.acc);

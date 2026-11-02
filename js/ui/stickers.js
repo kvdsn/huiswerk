@@ -123,88 +123,121 @@ const regenboog = [
     + `<polygon points="${star(60, 38, 25, 12, 5, 0.2)}" fill="#ffd95e" stroke="#ffd95e" stroke-width="4" ${J}/>${face(60, 40, 0.75)}${twinkle(22, 30, 9, '#ff9ec7')}${twinkle(84, 74, 8, '#9be3c0')}`)],
 ];
 
-// ---------- page 2: snoep ----------
-function spiral(cx, cy, maxR, turns = 2.6, steps = 44) {
-  const p = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const a = t * turns * 2 * Math.PI;
-    p.push(`${f(cx + maxR * t * Math.cos(a))} ${f(cy + maxR * t * Math.sin(a))}`);
-  }
-  return `M${p.join('L')}`;
-}
-const sprinkle = (x, y, r, c) => `<path d="M${x} ${y}l3 0" transform="rotate(${r} ${x} ${y})" stroke="${c}"/>`;
+// ---------- page 2: zee ----------
+const bubbles = (list, fill) => list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"${fill ? ` fill="${fill}" opacity=".85"` : ''}/>`).join('');
 
-const snoep = [
-  ['lolly', 'de lolly', sticker(
-    '<circle cx="50" cy="40" r="28"/><rect x="46" y="60" width="8" height="28" rx="4"/>',
-    '<rect x="46" y="60" width="8" height="28" rx="4" fill="#e3d4f7"/><circle cx="50" cy="40" r="28" fill="#ff9ec7"/>'
-    + `<path d="${spiral(50, 40, 24)}" fill="none" stroke="#fff3f9" stroke-width="4.5" stroke-linecap="round"/>`
-    + '<path d="M50 70l-9-5v10zM50 70l9-5v10z" fill="#9be3c0" stroke="#9be3c0" stroke-width="2" stroke-linejoin="round"/><circle cx="50" cy="70" r="3" fill="#7fcfae"/>')],
-
-  ['cupcake', 'de cupcake', (() => {
-    const wrap = 'M26 58H74L67 88H33Z';
-    const frost = 'M22 60C17 48 28 40 35 42C37 27 63 27 65 42C72 40 83 48 78 60Z';
-    return sticker(`<path d="${wrap}"/><path d="${frost}"/><circle cx="50" cy="26" r="7"/>`,
-      `<path d="${wrap}" fill="#9be3c0"/><path d="M38 58L40 88M50 58V88M62 58L60 88" stroke="#7fcfae" stroke-width="3"/>`
-      + `<path d="${frost}" fill="#ffb3d9"/><circle cx="50" cy="26" r="7" fill="#ff6b8f"/><path d="M50 20Q52 13 57 11" fill="none" stroke="#7fcfa0" stroke-width="2.5" stroke-linecap="round"/><circle cx="47.5" cy="23.5" r="2" fill="#fff" opacity=".7"/>`
-      + `<g stroke-width="2.5" stroke-linecap="round">${sprinkle(32, 50, 30, '#fff3b0')}${sprinkle(44, 40, -20, '#b9a6f5')}${sprinkle(60, 44, 50, '#fff')}${sprinkle(68, 53, -10, '#9be3c0')}</g>${face(50, 70, 0.9)}`);
+const zee = [
+  ['vis', 'de vis', (() => {
+    const tail = 'M64 50L86 32Q80 50 86 68Z';
+    const fin = 'M30 34Q42 18 56 32Z';
+    const bub = [[16, 22, 4.5], [26, 13, 3]];
+    return sticker(`<path d="${tail}"/><path d="${fin}"/><ellipse cx="42" cy="52" rx="28" ry="21"/>${bubbles(bub)}`,
+      `<g fill="#c8a8f0" stroke="#c8a8f0" stroke-width="4" ${J}><path d="${tail}"/><path d="${fin}"/></g><ellipse cx="42" cy="52" rx="28" ry="21" fill="#ff9ec7"/>`
+      + '<path d="M52 34Q60 52 52 70M60 38Q66 52 60 66" fill="none" stroke="#ffc0dc" stroke-width="3.5" stroke-linecap="round"/>'
+      + '<ellipse cx="44" cy="62" rx="6" ry="3.5" transform="rotate(20 44 62)" fill="#c8a8f0"/>'
+      + `${face(34, 50, 0.9)}${bubbles(bub, '#bfe6ff')}`);
   })()],
 
-  ['ijsje', 'het ijsje', sticker(
-    '<path d="M32 52H68L50 92Z"/><circle cx="38" cy="47" r="14"/><circle cx="62" cy="47" r="14"/><circle cx="50" cy="31" r="17"/>',
-    '<path d="M32 52H68L50 92Z" fill="#f5c98a" stroke="#f5c98a" stroke-width="3" stroke-linejoin="round"/><path d="M38 60L52 76M48 58L58 69M62 60L48 76M52 58L42 69" stroke="#e0a95c" stroke-width="2" stroke-linecap="round"/>'
-    + '<circle cx="38" cy="47" r="14" fill="#9be3c0"/><circle cx="62" cy="47" r="14" fill="#c8b2f5"/><circle cx="50" cy="31" r="17" fill="#ffa8cf"/><circle cx="43" cy="22" r="3.5" fill="#fff" opacity=".6"/>'
-    + face(50, 33, 0.95))],
-
-  ['donut', 'de donut', sticker(
-    '<circle cx="50" cy="50" r="35"/>',
-    '<circle cx="50" cy="50" r="35" fill="#f2c48d"/>'
-    + `<path d="${wavy(50, 50, 28, 2.5, 8)}" fill="#ff9ec7"/><circle cx="50" cy="44" r="12" fill="#e9b47a"/><circle cx="50" cy="44" r="8.5" fill="#fff"/>`
-    + `<g stroke-width="2.6" stroke-linecap="round">${sprinkle(30, 36, 40, '#fff3b0')}${sprinkle(40, 26, -30, '#9be3c0')}${sprinkle(62, 26, 20, '#fff')}${sprinkle(70, 40, 80, '#b9a6f5')}${sprinkle(30, 58, -50, '#b9a6f5')}${sprinkle(68, 60, 10, '#fff3b0')}</g>`
-    + face(50, 66, 0.85))],
-
-  ['snoepje', 'het snoepje', (() => {
-    const L = 'M30 46L11 33Q7 50 11 67L30 54Z';
-    const R = 'M70 46L89 33Q93 50 89 67L70 54Z';
-    return sticker(`<path d="${L}"/><path d="${R}"/><ellipse cx="50" cy="50" rx="23" ry="18"/>`,
-      `<g fill="#d9c6fa" stroke="#d9c6fa" stroke-width="3" stroke-linejoin="round"><path d="${L}"/><path d="${R}"/></g><path d="M14 42L24 47M14 58L24 53M86 42L76 47M86 58L76 53" stroke="#b9a6f5" stroke-width="2" stroke-linecap="round"/>`
-      + '<ellipse cx="50" cy="50" rx="23" ry="18" fill="#c8a8f0"/><path d="M36 36Q30 50 36 64M64 36Q70 50 64 64" fill="none" stroke="#fff" stroke-width="3.5" opacity=".55"/>'
-      + face(50, 49, 0.95));
+  ['octopus', 'de octopus', (() => {
+    const legs = 'M30 58Q20 74 28 86M42 64Q38 80 44 89M58 64Q62 80 56 89M70 58Q80 74 72 86';
+    let dots = '';
+    [[24.5, 73], [40.5, 78], [59.5, 78], [75.5, 73]].forEach(([x, y]) => { dots += `<circle cx="${x}" cy="${y}" r="1.8"/>`; });
+    return sticker(`<path d="${legs}" stroke-width="18" fill="none"/><circle cx="50" cy="40" r="28"/>`,
+      `<path d="${legs}" fill="none" stroke="#b9a6f5" stroke-width="9" stroke-linecap="round"/><g fill="#ece0ff">${dots}</g>`
+      + '<circle cx="50" cy="40" r="28" fill="#c8a8f0"/><ellipse cx="37" cy="24" rx="7" ry="4.5" transform="rotate(-30 37 24)" fill="#fff" opacity=".55"/>'
+      + face(50, 46, 1.1));
   })()],
 
-  ['taart', 'de taart', (() => {
-    const drip = 'M20 58Q20 46 32 46H68Q80 46 80 58Q76 64 72 58Q68 52 64 60Q60 66 56 58Q52 52 48 60Q44 66 40 58Q36 52 32 60Q28 66 24 58Z';
-    return sticker('<rect x="20" y="46" width="60" height="42" rx="7"/><rect x="46" y="26" width="8" height="22"/><ellipse cx="50" cy="20" rx="5" ry="7"/>',
-      '<rect x="20" y="46" width="60" height="42" rx="7" fill="#ffe3f1"/><rect x="20" y="70" width="60" height="6" fill="#ffb3d9"/>'
-      + `<path d="${drip}" fill="#ff9ec7"/><rect x="46" y="27" width="8" height="20" rx="2" fill="#9be3c0"/><path d="M46 33L54 29M46 40L54 36" stroke="#fff" stroke-width="2"/>`
-      + '<path d="M50 12Q57 20 55 24Q53 28 50 28Q47 28 45 24Q43 20 50 12Z" fill="#ffd95e"/><ellipse cx="50" cy="23" rx="2" ry="3" fill="#ffad5b"/>'
-      + '<circle cx="30" cy="48" r="3" fill="#ff6b8f"/><circle cx="70" cy="48" r="3" fill="#ff6b8f"/>'
-      + face(50, 80, 0.85));
+  ['walvis', 'de walvis', (() => {
+    const body = 'M10 60C10 42 26 36 42 36C60 36 72 48 72 62C72 76 58 84 40 84C22 84 10 76 10 60Z';
+    const tail = 'M64 64C74 60 78 52 77 44C71 42 67 36 69 31C75 32 79 36 81 40C83 34 87 31 92 31C92 37 88 43 83 46C83 57 77 66 68 71Z';
+    const spout = 'M32 34Q32 26 32 22M32 22Q24 18 22 12M32 22Q40 18 42 12';
+    return sticker(`<path d="${tail}"/><path d="${body}"/><path d="${spout}" stroke-width="13" fill="none"/>`,
+      `<path d="${spout}" fill="none" stroke="#9fd8ff" stroke-width="4" stroke-linecap="round"/><circle cx="22" cy="12" r="2.6" fill="#9fd8ff"/><circle cx="42" cy="12" r="2.6" fill="#9fd8ff"/>`
+      + `<path d="${tail}" fill="#8cc4f5" stroke="#8cc4f5" stroke-width="2" ${J}/><path d="${body}" fill="#9fd0ff"/>`
+      + '<path d="M14 68C24 80 52 84 68 72C64 80 54 84 40 84C26 84 16 78 14 68Z" fill="#e4f3ff"/>'
+      + '<path d="M46 66Q52 74 58 68" fill="none" stroke="#8cc4f5" stroke-width="3.5" stroke-linecap="round"/>'
+      + face(34, 58, 0.95));
   })()],
 
-  ['aardbei', 'de aardbei', (() => {
-    const body = 'M50 90C29 82 17 63 19 47C21 34 34 30 50 35C66 30 79 34 81 47C83 63 71 82 50 90Z';
-    let seeds = '';
-    [[32, 46], [68, 46], [28, 60], [72, 60], [38, 76], [62, 76], [50, 84], [50, 44]].forEach(([x, y]) => { seeds += `<ellipse cx="${x}" cy="${y}" rx="1.4" ry="2.2" fill="#ffe9a0"/>`; });
-    return sticker(`<path d="${body}"/><polygon points="${star(50, 32, 17, 7, 5, Math.PI)}"/><rect x="47" y="12" width="6" height="14" rx="3"/>`,
-      `<path d="${body}" fill="#ff7b9c"/>${seeds}<polygon points="${star(50, 32, 17, 7, 5, Math.PI)}" fill="#8fdcb0" stroke="#8fdcb0" stroke-width="3" ${J}/><rect x="47.5" y="13" width="5" height="13" rx="2.5" fill="#7fcfa0"/>`
-      + face(50, 60, 1.05));
+  ['zeepaardje', 'het zeepaardje', (() => {
+    const snout = 'M40 31L24 34';
+    const tail = 'M56 66Q64 88 44 88Q32 87 34 77Q36 69 44 72';
+    const head = '<circle cx="50" cy="30" r="14"/>';
+    const body = '<ellipse cx="54" cy="52" rx="15" ry="19" transform="rotate(-12 54 52)"/>';
+    const fin = 'M66 44Q80 46 76 60Q72 58 68 56Z';
+    return sticker(`<path d="${snout}" stroke-width="18"/><path d="${tail}" stroke-width="17" fill="none"/><path d="${fin}"/>${head}${body}<path d="M46 16L50 10L54 16" stroke-width="13"/>`,
+      `<path d="${fin}" fill="#ffa8cf" stroke="#ffa8cf" stroke-width="3" ${J}/><path d="M68 48L76 50M68 53L75 56" stroke="#ff8fbf" stroke-width="1.8" stroke-linecap="round"/>`
+      + `<path d="${tail}" fill="none" stroke="#ffd36e" stroke-width="8" stroke-linecap="round"/><path d="${snout}" stroke="#ffd36e" stroke-width="9" stroke-linecap="round"/>`
+      + `<g fill="#ffd95e">${head}${body}</g><path d="M46 16L50 10L54 16" fill="#ffb3d9" stroke="#ffb3d9" stroke-width="4" ${J}/>`
+      + '<path d="M44 46Q50 49 56 46M44 54Q50 57 56 54M46 62Q51 65 56 62" fill="none" stroke="#ffbf5e" stroke-width="2.4" stroke-linecap="round"/>'
+      + '<ellipse cx="56" cy="35" rx="3.6" ry="2.2" fill="#ff7fae" opacity=".55"/><circle cx="48" cy="28" r="2.7" fill="#4a3266"/><circle cx="48.9" cy="27" r=".9" fill="#fff"/>'
+      + '<path d="M38 36Q40 38 43 37" fill="none" stroke="#4a3266" stroke-width="1.7" stroke-linecap="round"/>');
   })()],
 
-  ['koekje', 'het koekje', sticker(
-    '<circle cx="50" cy="50" r="37"/>',
-    `<path d="${wavy(50, 50, 35, 1.6, 9)}" fill="#ecbd7f"/><circle cx="50" cy="50" r="29" fill="#f3cb92"/>`
-    + '<g fill="#8a5a3c"><circle cx="32" cy="34" r="4"/><circle cx="64" cy="30" r="3.5"/><circle cx="72" cy="58" r="4"/><circle cx="30" cy="64" r="3.5"/><circle cx="50" cy="76" r="3"/><circle cx="48" cy="28" r="2.5"/></g>'
-    + face(50, 52, 1.1))],
+  ['schelp', 'de schelp', (() => {
+    let bumps = '';
+    let ribs = '';
+    for (let i = 0; i <= 6; i++) {
+      const a = Math.PI + (i * Math.PI) / 6;
+      bumps += `<circle cx="${f(50 + 33 * Math.cos(a))}" cy="${f(58 + 33 * Math.sin(a))}" r="7"/>`;
+      if (i > 0 && i < 6) ribs += `M50 80L${f(50 + 30 * Math.cos(a))} ${f(58 + 30 * Math.sin(a))}`;
+    }
+    const fan = 'M50 82L17 58A33 33 0 0 1 83 58Z';
+    const hinge = 'M41 76H59L56 87H44Z';
+    return sticker(`<path d="${fan}"/>${bumps}<path d="${hinge}"/>`,
+      `<path d="${hinge}" fill="#ffa8cf" stroke="#ffa8cf" stroke-width="3" ${J}/><g fill="#ffc0dc"><path d="${fan}"/>${bumps}</g>`
+      + `<path d="${ribs}" fill="none" stroke="#ffa8cf" stroke-width="3" stroke-linecap="round"/>`
+      + '<ellipse cx="30" cy="38" rx="5" ry="3.5" transform="rotate(-40 30 38)" fill="#fff" opacity=".65"/>'
+      + `<ellipse cx="50" cy="56" rx="17" ry="11" fill="#ffc0dc"/>${face(50, 55, 0.95)}`);
+  })()],
 
-  ['chocolade', 'de chocolade', sticker(
-    '<rect x="28" y="12" width="44" height="76" rx="6" transform="rotate(-10 50 50)"/>',
-    '<g transform="rotate(-10 50 50)"><rect x="28" y="12" width="44" height="76" rx="6" fill="#a8775a"/>'
-    + '<g fill="#bd8c6c"><rect x="32" y="16" width="16" height="12" rx="2"/><rect x="52" y="16" width="16" height="12" rx="2"/><rect x="32" y="32" width="16" height="12" rx="2"/><rect x="52" y="32" width="16" height="12" rx="2"/></g>'
-    + '<path d="M28 50L34 46L40 51L46 46L52 51L58 46L64 51L72 47V82Q72 88 66 88H34Q28 88 28 82Z" fill="#ff9ec7"/><rect x="28" y="62" width="44" height="12" fill="#fff3b0"/>'
-    + `<path d="${HEART}" transform="translate(50 68) scale(.32)" fill="#ff6b8f"/></g>`
-    + face(50, 80, 0.75))],
+  ['zeester', 'de zeester', (() => {
+    const p = star(50, 53, 37, 17, 5);
+    let dots = '';
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      dots += `<circle cx="${f(50 + 26 * Math.cos(a))}" cy="${f(53 + 26 * Math.sin(a))}" r="2.2"/><circle cx="${f(50 + 18 * Math.cos(a))}" cy="${f(53 + 18 * Math.sin(a))}" r="1.6"/>`;
+    }
+    return sticker(`<polygon points="${p}" stroke-width="19"/>`,
+      `<polygon points="${p}" fill="#ffab91" stroke="#ffab91" stroke-width="10" ${J}/><g fill="#ffe0d2">${dots}</g>${face(50, 54, 1)}`);
+  })()],
+
+  ['zeemeermin', 'de zeemeermin', (() => {
+    const hair = 'M33 34C30 14 70 14 67 34C70 44 72 52 66 58Q60 54 58 46H42Q40 54 34 58C28 52 30 44 33 34Z';
+    const tail = 'M39 50H61C64 62 62 72 54 80L50 82L46 80C38 72 36 62 39 50Z';
+    const fin = 'M50 79Q40 78 30 88Q42 93 50 85Q58 93 70 88Q60 78 50 79Z';
+    return sticker(`<path d="${hair}"/><path d="${tail}"/><path d="${fin}"/><circle cx="50" cy="30" r="13"/>`,
+      `<path d="${hair}" fill="#c8a8f0"/><path d="${fin}" fill="#7fcfae" stroke="#7fcfae" stroke-width="3" ${J}/><path d="${tail}" fill="#9be3c0"/>`
+      + '<path d="M44 60q3 3 6 0q3 3 6 0M42 67q3 3 6 0M47 74q3 3 6 0" fill="none" stroke="#7fcfae" stroke-width="1.8" stroke-linecap="round"/>'
+      + '<rect x="42" y="40" width="16" height="12" rx="5" fill="#ffe3d0"/><circle cx="45.5" cy="46" r="3.6" fill="#ff9ec7"/><circle cx="54.5" cy="46" r="3.6" fill="#ff9ec7"/>'
+      + '<circle cx="50" cy="30" r="13" fill="#ffe3d0"/><path d="M37 28C38 18 50 14 58 18C62 20 64 24 63 28C56 28 50 24 47 20C45 24 41 27 37 28Z" fill="#c8a8f0"/>'
+      + `${face(50, 31, 0.62)}${twinkle(61, 19, 5, '#ffd95e')}`);
+  })()],
+
+  ['krab', 'de krab', (() => {
+    const claws = '<circle cx="20" cy="29" r="11"/><circle cx="80" cy="29" r="11"/>';
+    const notch = 'M20 30L14 16H26ZM80 30L74 16H86Z';
+    const arms = 'M30 56L22 38M70 56L78 38';
+    const legs = 'M24 64L13 62M24 71L13 74M28 77L18 84M76 64L87 62M76 71L87 74M72 77L82 84';
+    const stalks = 'M42 48L40 38M58 48L60 38';
+    return sticker(`${claws}<path d="${arms}${legs}${stalks}" stroke-width="15"/><circle cx="40" cy="34" r="7"/><circle cx="60" cy="34" r="7"/><ellipse cx="50" cy="64" rx="28" ry="19"/>`,
+      `<path d="${arms}${legs}${stalks}" stroke="#ff8a8a" stroke-width="5" stroke-linecap="round"/><g fill="#ff8a8a">${claws}</g><path d="${notch}" fill="#fff" stroke="#fff" stroke-width="2" ${J}/>`
+      + '<ellipse cx="50" cy="64" rx="28" ry="19" fill="#ff9e9e"/><ellipse cx="38" cy="54" rx="6" ry="3.5" transform="rotate(-20 38 54)" fill="#fff" opacity=".5"/>'
+      + '<g><circle cx="40" cy="34" r="7" fill="#fff"/><circle cx="60" cy="34" r="7" fill="#fff"/><circle cx="40.5" cy="35" r="3.6" fill="#4a3266"/><circle cx="59.5" cy="35" r="3.6" fill="#4a3266"/><circle cx="41.8" cy="33.6" r="1.2" fill="#fff"/><circle cx="60.8" cy="33.6" r="1.2" fill="#fff"/></g>'
+      + '<ellipse cx="36" cy="68" rx="4" ry="2.4" fill="#ff6b8f" opacity=".45"/><ellipse cx="64" cy="68" rx="4" ry="2.4" fill="#ff6b8f" opacity=".45"/>'
+      + '<path d="M45 66Q50 71 55 66" fill="none" stroke="#4a3266" stroke-width="1.9" stroke-linecap="round"/>');
+  })()],
+
+  ['kwal', 'de kwal', (() => {
+    const dome = 'M20 52C20 22 80 22 80 52Q72.5 58 65 52Q57.5 58 50 52Q42.5 58 35 52Q27.5 58 20 52Z';
+    const t = 'M30 57Q24 66 30 74Q36 82 30 90M43 58Q38 67 43 75Q48 83 43 88M57 58Q62 67 57 75Q52 83 57 88M70 57Q76 66 70 74Q64 82 70 90';
+    return sticker(`<path d="${t}" stroke-width="13" fill="none"/><path d="${dome}"/>`,
+      `<path d="${t}" fill="none" stroke="#c8a8f0" stroke-width="4" stroke-linecap="round"/>`
+      + `<path d="${dome}" fill="#ffb3d9" stroke="#ffb3d9" stroke-width="2" ${J}/><path d="M24 50Q30 54 35 50Q42 54 50 50Q58 54 65 50Q70 54 76 50" fill="none" stroke="#ff9ec7" stroke-width="3" stroke-linecap="round"/>`
+      + '<ellipse cx="36" cy="32" rx="6" ry="3.5" transform="rotate(-30 36 32)" fill="#fff" opacity=".6"/><circle cx="64" cy="30" r="2" fill="#fff" opacity=".6"/>'
+      + face(50, 42, 1));
+  })()],
 ];
 
 // ---------- page 3: dieren ----------
@@ -359,49 +392,54 @@ const page = (id, title, list) => ({
 
 export const STICKER_PAGES = [
   page('regenboog', 'Regenboog', regenboog),
-  page('snoep', 'Snoep', snoep),
+  page('zee', 'Zee', zee),
   page('dieren', 'Dieren', dieren),
   page('ruimte', 'Ruimte', ruimte),
 ];
 
 export const ACCESSORIES = [
-  { id: 'kroon', name: 'de kroon', page: 'regenboog' },
-  { id: 'bril', name: 'de bril', page: 'snoep' },
-  { id: 'strik', name: 'de strik', page: 'dieren' },
-  { id: 'vleugels', name: 'de vleugels', page: 'ruimte' },
+  { id: 'regenboog', name: 'een regenboog', page: 'regenboog' },
+  { id: 'schelpenkroon', name: 'de schelpenkroon', page: 'zee' },
+  { id: 'konijntje', name: 'een konijntje', page: 'dieren' },
+  { id: 'planeet', name: 'een planeet met sterren', page: 'ruimte' },
 ];
 
-const CROWN = 'M18 74L14 32L33 50L50 22L67 50L86 32L82 74Z';
-const BOW_L = 'M50 48C40 30 16 26 14 42C12 58 34 64 50 52Z';
-const BOW_R = 'M50 48C60 30 84 26 86 42C88 58 66 64 50 52Z';
-const TAILS = 'M46 54L34 80L42 77L46 84L52 56ZM54 54L66 80L58 77L54 84L48 56Z';
-const WING_UP = 'M0 0C-10-24-36-38-44-26C-50-14-32-2 0 0Z';
-const WING_LO = 'M0 0C-22 0-38 10-34 20C-30 28-10 20 0 0Z';
-const wing = (fill1, fill2) => `<path d="${WING_UP}"${fill1 ? ` fill="${fill1}"` : ''}/><path d="${WING_LO}"${fill2 ? ` fill="${fill2}"` : ''}/>`;
-const wings = (a, b) => `<g transform="translate(48 52) scale(.84)">${wing(a, b)}</g><g transform="translate(52 52) scale(-.84 .84)">${wing(a, b)}</g>`;
+// scallop shell for the crown icon, hinge at the local origin, opening upwards
+const SHELL = 'M0 1L-11-9C-13-13-11-17-8-17C-7-21-2-22 0-19C2-22 7-21 8-17C11-17 13-13 11-9Z';
+const shellAt = (x, y, rot, s, fill, line) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">`
+  + `<path d="${SHELL}" fill="${fill}"/><path d="M0 0L-6-14M0 0V-17M0 0L6-14" fill="none" stroke="${line}" stroke-width="1.6" stroke-linecap="round"/></g>`;
+const shellSil = (x, y, rot, s) => `<path d="${SHELL}" transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" stroke-width="${f(9 / s)}"/>`;
+const pearlAt = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fffaf2" stroke="#d8c3e8" stroke-width="1.4"/><circle cx="${f(x - r * 0.35)}" cy="${f(y - r * 0.35)}" r="${f(r * 0.32)}" fill="#fff"/>`;
+const CROWN_SHELLS = [[27, 62, -30, 1.45], [73, 62, 30, 1.45], [50, 60, 0, 2.1]];
+
+const RING = (half) => `<path d="M10 52A34 9 0 0 ${half} 78 52" transform="rotate(-20 44 52)" fill="none"`;
 
 export const ACCESSORY_ICONS = {
-  kroon: sticker(
-    `<path d="${CROWN}" stroke-width="13"/><circle cx="14" cy="30" r="5"/><circle cx="50" cy="20" r="5"/><circle cx="86" cy="30" r="5"/>`,
-    `<path d="${CROWN}" fill="#ffd95e" stroke="#ffd95e" stroke-width="4" ${J}/><rect x="17" y="62" width="66" height="14" rx="4" fill="#f7c34d"/>`
-    + '<g fill="#ffe9a0"><circle cx="14" cy="30" r="5"/><circle cx="50" cy="20" r="5"/><circle cx="86" cy="30" r="5"/></g>'
-    + '<circle cx="32" cy="69" r="4" fill="#9be3c0"/><circle cx="68" cy="69" r="4" fill="#c8a8f0"/>'
-    + `<path d="${HEART}" transform="translate(50 68) scale(.38)" fill="#ff6b9a"/><path d="M24 58L25.5 47" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>`),
+  regenboog: sticker(
+    `<path d="M12 72A38 38 0 0 1 88 72Z"/>${cloudSil(22, 70)}${cloudSil(78, 70)}${twinkle(84, 20, 8)}`,
+    `<g fill="none" stroke-width="7">${[[35, '#ffb3d9'], [28, '#ffe08a'], [21, '#a8e6cf'], [14, '#c8b2f5']].map(([r, c]) => `<path d="M${50 - r} 72A${r} ${r} 0 0 1 ${50 + r} 72" stroke="${c}"/>`).join('')}</g>`
+    + `<g fill="#f4f9ff">${cloudSil(22, 70)}${cloudSil(78, 70)}</g>${twinkle(84, 20, 8, '#ffd95e')}`),
 
-  bril: sticker(
-    `<path d="${HEART}" transform="translate(30 50) scale(1.05)" stroke-width="15"/><path d="${HEART}" transform="translate(70 50) scale(1.05)" stroke-width="15"/>`,
-    `<g stroke="#ff5fa8" stroke-width="4.5" ${J}><path d="M46 41Q50 37 54 41" fill="none"/>`
-    + `<path d="${HEART}" transform="translate(30 50) scale(1.05)" fill="#ffd1e8" stroke-width="3.6"/><path d="${HEART}" transform="translate(70 50) scale(1.05)" fill="#ffd1e8" stroke-width="3.6"/></g>`
-    + '<path d="M21 43Q23 38 27 37M61 43Q63 38 67 37" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>'),
+  schelpenkroon: sticker(
+    `${CROWN_SHELLS.map(([x, y, r, k]) => shellSil(x, y, r, k)).join('')}<rect x="16" y="56" width="68" height="18" rx="7"/>`,
+    '<path d="M24 60L36 44H64L76 60Z" fill="#8fdcb8"/><rect x="16" y="56" width="68" height="18" rx="7" fill="#a8e6cf"/><path d="M21 71H79" stroke="#8fdcb8" stroke-width="3" stroke-linecap="round"/>'
+    + shellAt(27, 62, -30, 1.45, '#d9c6fa', '#b48ad6') + shellAt(73, 62, 30, 1.45, '#d9c6fa', '#b48ad6') + shellAt(50, 60, 0, 2.1, '#ffc0dc', '#ff9ec7')
+    + pearlAt(24, 66, 3.6) + pearlAt(37, 66.5, 4.2) + pearlAt(50, 67, 5) + pearlAt(63, 66.5, 4.2) + pearlAt(76, 66, 3.6)
+    + '<ellipse cx="42" cy="34" rx="3.5" ry="2.4" transform="rotate(-40 42 34)" fill="#fff" opacity=".7"/>'),
 
-  strik: sticker(
-    `<path d="${BOW_L}"/><path d="${BOW_R}"/><path d="${TAILS}"/>`,
-    `<g fill="#ff8fbf" stroke="#ff8fbf" stroke-width="3" stroke-linejoin="round"><path d="${TAILS}"/><path d="${BOW_L}"/><path d="${BOW_R}"/></g>`
-    + '<path d="M44 46C36 38 26 36 22 42M56 46C64 38 74 36 78 42" fill="none" stroke="#ff6fae" stroke-width="2.5" stroke-linecap="round"/>'
-    + '<rect x="42" y="40" width="16" height="18" rx="7" fill="#ff6fae"/><circle cx="24" cy="38" r="2.5" fill="#fff" opacity=".7"/><circle cx="76" cy="38" r="2.5" fill="#fff" opacity=".7"/>'),
+  konijntje: (() => {
+    const ears = '<ellipse cx="42" cy="23" rx="6.5" ry="14" transform="rotate(-12 42 23)"/><ellipse cx="58" cy="23" rx="6.5" ry="14" transform="rotate(12 58 23)"/>';
+    const body = '<circle cx="68" cy="76" r="6"/><ellipse cx="50" cy="73" rx="19" ry="15"/><ellipse cx="39" cy="86" rx="8.5" ry="5"/><ellipse cx="61" cy="86" rx="8.5" ry="5"/><circle cx="50" cy="46" r="17"/>';
+    return sticker(`${ears}${body}`,
+      `<g fill="#efe4fa">${ears}</g><ellipse cx="42" cy="24" rx="3" ry="9.5" transform="rotate(-12 42 24)" fill="#ffc0dc"/><ellipse cx="58" cy="24" rx="3" ry="9.5" transform="rotate(12 58 24)" fill="#ffc0dc"/>`
+      + `<g fill="#efe4fa">${body}</g><circle cx="68" cy="76" r="6" fill="#fff"/><ellipse cx="50" cy="75" rx="10" ry="8" fill="#fbf6ff"/>`
+      + `${face(50, 47, 0.8)}${nose(50, 50)}`);
+  })(),
 
-  vleugels: sticker(
-    `<g stroke-width="11">${wings()}</g>`,
-    `${wings('#d9c6fa', '#bdeedd')}<g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".75"><path d="M42 46Q34 38 24 35M58 46Q66 38 76 35"/></g>`
-    + `${twinkle(50, 30, 6, '#ffd95e')}${twinkle(16, 72, 5, '#ff9ec7')}${twinkle(84, 72, 5, '#ff9ec7')}<circle cx="50" cy="52" r="4" fill="#ffb3d9"/>`),
+  planeet: sticker(
+    `${RING(1)} stroke-width="16"/><circle cx="44" cy="52" r="21"/>${twinkle(80, 22, 9)}${twinkle(80, 79, 7)}${twinkle(17, 19, 6.5)}`,
+    `${RING(1)} stroke="#f2bf4f" stroke-width="6.5" stroke-linecap="round"/><circle cx="44" cy="52" r="21" fill="#ffb3d9"/>`
+    + '<path d="M25 46Q44 52 63 43M26 60Q44 66 62 56" fill="none" stroke="#ffd1e8" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="40" r="4" fill="#fff" opacity=".7"/>'
+    + `${RING(0)} stroke="#ffd36e" stroke-width="6.5" stroke-linecap="round"/>`
+    + `${twinkle(80, 22, 9, '#ffe27a')}${twinkle(80, 79, 7, '#ffe27a')}${twinkle(17, 19, 6.5, '#ffe27a')}`),
 };

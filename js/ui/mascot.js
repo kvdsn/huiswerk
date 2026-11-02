@@ -4,17 +4,36 @@
 //   const m = mountMascot(document.querySelector('#mascot'));
 //   m.react('happy');      // jump + hoof clap (~600 ms)
 //   m.react('encourage');  // gentle nod (~500 ms)
-//   m.wear(['kroon', 'bril']); // accessories: kroon, bril, strik, vleugels
-//   mountMascot(el, { wear: ['vleugels'] }); // start with accessories on
+//   m.wear(['regenboog', 'konijntje']); // accessories: regenboog, schelpenkroon, konijntje, planeet
+//   mountMascot(el, { wear: ['planeet'] }); // start with accessories on
 
-export const MASCOT_ACCESSORIES = ['kroon', 'bril', 'strik', 'vleugels'];
+export const MASCOT_ACCESSORIES = ['regenboog', 'schelpenkroon', 'konijntje', 'planeet'];
 
 // Accessories are always in the SVG but hidden until they get the class
 // "is-worn". Each lives in the group it should move with.
-const WING = `
-        <path d="M0 0C-10-24-36-38-44-26C-50-14-32-2 0 0Z" fill="url(#mascot-wing-grad)" stroke="#c79bd8" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M0 0C-22 0-38 10-34 20C-30 28-10 20 0 0Z" fill="#c9f2e2" stroke="#8fd6b8" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M-6-4Q-20-14-34-20M-6 3Q-18 8-26 14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>`;
+const rainbowArc = (r, c) => `<path d="M${100 - r} 178A${r} ${r} 0 0 1 ${100 + r} 178" stroke="${c}"/>`;
+const cloud = (x, y) => `<g transform="translate(${x} ${y})"><path d="M-17 6C-23 6-23-4-16-5C-16-13-6-15-2-9C1-17 13-16 13-7C20-8 22 6 15 6Z" fill="#f4f9ff" stroke="#c7d6ef" stroke-width="2.5" stroke-linejoin="round"/><path d="M-11-4Q-10-8-6-8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>`;
+
+// a small scallop shell, hinge at the local origin, opening upwards
+const shell = (x, y, rot, s, fill, line) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">`
+  + `<path d="M-4 0H4L3 4H-3Z" fill="${line}" stroke="${line}" stroke-width="1.5" stroke-linejoin="round"/>`
+  + `<path d="M0 1L-11-9C-13-13-11-17-8-17C-7-21-2-22 0-19C2-22 7-21 8-17C11-17 13-13 11-9Z" fill="${fill}" stroke="${line}" stroke-width="2" stroke-linejoin="round"/>`
+  + `<path d="M0 0L-6-14M0 0V-17M0 0L6-14" fill="none" stroke="${line}" stroke-width="1.5" stroke-linecap="round"/></g>`;
+const pearl = (x, y, r = 3.2) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fffaf2" stroke="#d8c3e8" stroke-width="1.5"/><circle cx="${x - r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.3}" fill="#fff"/>`;
+
+const orbitStar = (R) => `<path d="M0 ${-R}Q${R * 0.22} ${-R * 0.22} ${R} 0Q${R * 0.22} ${R * 0.22} 0 ${R}Q${-R * 0.22} ${R * 0.22} ${-R} 0Q${-R * 0.22} ${-R * 0.22} 0 ${-R}Z" fill="#ffe27a" stroke="#e8b94a" stroke-width="1.8" stroke-linejoin="round"/>`;
+// items on a circle of radius 96 around (100 96): far enough out to never cover the face
+const orbitAt = (deg, inner) => {
+  const a = (deg * Math.PI) / 180;
+  const x = +(100 + 96 * Math.cos(a)).toFixed(1);
+  const y = +(96 + 96 * Math.sin(a)).toFixed(1);
+  return `<g transform="translate(${x} ${y})"><g class="acc-orbit-item">${inner}</g></g>`;
+};
+const PLANET = '<g transform="rotate(-20) scale(1.3)">'
+  + '<path d="M-17 0A17 5.5 0 0 1 17 0" fill="none" stroke="#f2bf4f" stroke-width="3.5" stroke-linecap="round"/>'
+  + '<circle r="10.5" fill="#ffb3d9" stroke="#e48fbf" stroke-width="2"/><path d="M-9.5-4Q0-1 9.5-4.5M-9 4Q0 7 9 3.5" fill="none" stroke="#ffd1e8" stroke-width="2.4" stroke-linecap="round"/>'
+  + '<path d="M-17 0A17 5.5 0 0 0 17 0" fill="none" stroke="#ffd36e" stroke-width="3.5" stroke-linecap="round"/>'
+  + '<circle cx="-4" cy="-5" r="2" fill="#fff" opacity=".8"/></g>';
 
 export const mascotSVG = `
 <svg class="mascot" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Eenhoorn">
@@ -27,17 +46,14 @@ export const mascotSVG = `
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#fbeef7"/>
     </linearGradient>
-    <linearGradient id="mascot-wing-grad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#d7c4fb"/>
-      <stop offset=".55" stop-color="#f6d2ec"/>
-      <stop offset="1" stop-color="#fff1c4"/>
-    </linearGradient>
   </defs>
 
-  <!-- accessory: wings (behind everything) -->
-  <g class="acc acc-vleugels">
-    <g transform="translate(70 146) rotate(6) scale(1.35)"><g class="acc-wing">${WING}</g></g>
-    <g transform="translate(130 146) rotate(-6) scale(-1.35 1.35)"><g class="acc-wing">${WING}</g></g>
+  <!-- accessory: rainbow (behind everything) -->
+  <g class="acc acc-regenboog">
+    <g class="acc-rainbow" fill="none" stroke-width="10.5">
+      ${rainbowArc(116, '#ffb3d9')}${rainbowArc(106, '#ffe08a')}${rainbowArc(96, '#a8e6cf')}${rainbowArc(86, '#c8b2f5')}
+    </g>
+    ${cloud(-1, 176)}${cloud(201, 176)}
   </g>
 
   <g class="mascot-body">
@@ -93,14 +109,13 @@ export const mascotSVG = `
       <path d="M128 56 C136 58 142 64 144 72 C138 68 132 66 126 65 Z" fill="#a8e6cf"/>
     </g>
 
-    <!-- accessory: crown, around the base of the horn (the horn shows through the gap) -->
-    <g class="acc acc-kroon">
-      <path d="M74 58L70 30L80 42L86 26L94 46H106L114 26L120 42L130 30L126 58Z" fill="#ffd95e" stroke="#e0a83a" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M73.5 49H126.5L126 58H74Z" fill="#f7c34d" stroke="#e0a83a" stroke-width="2.5" stroke-linejoin="round"/>
-      <g fill="#fff3b0" stroke="#e0a83a" stroke-width="2"><circle cx="70" cy="29" r="3.5"/><circle cx="86" cy="25" r="3.5"/><circle cx="114" cy="25" r="3.5"/><circle cx="130" cy="29" r="3.5"/></g>
-      <circle cx="84" cy="53.5" r="2.6" fill="#9be3c0"/><circle cx="116" cy="53.5" r="2.6" fill="#c8a8f0"/>
-      <path d="M0 14C-16 4-20-6-16-12C-12-18-4-18 0-10C4-18 12-18 16-12C20-6 16 4 0 14Z" transform="translate(100 53.5) scale(.24)" fill="#ff6b9a"/>
-      <path d="M76 46L77 37" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    <!-- accessory: crown of shells and pearls around the base of the horn (the horn stays free) -->
+    <g class="acc acc-schelpenkroon">
+      <path d="M72 50Q86 46 92 50L91 59Q84 56 73 59ZM108 50Q114 46 128 50L127 59Q116 56 109 59Z" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M88 52Q100 57 112 52L111 60Q100 64 89 60Z" fill="#a8e6cf" stroke="#7fcfae" stroke-width="2.2" stroke-linejoin="round"/>
+      ${shell(73, 52, -32, 0.85, '#d9c6fa', '#b48ad6')}${shell(127, 52, 32, 0.85, '#d9c6fa', '#b48ad6')}
+      ${shell(85, 50, -10, 1.1, '#ffc0dc', '#e48fbf')}${shell(115, 50, 10, 1.1, '#ffc0dc', '#e48fbf')}
+      ${pearl(79, 56, 2.6)}${pearl(92, 56.5, 2.8)}${pearl(100, 59, 3.4)}${pearl(108, 56.5, 2.8)}${pearl(121, 56, 2.6)}
     </g>
 
     <!-- cheeks -->
@@ -125,27 +140,30 @@ export const mascotSVG = `
     <ellipse cx="108" cy="115" rx="2.2" ry="1.6" fill="#d58bb8"/>
     <path d="M93 122 Q100 128 107 122" fill="none" stroke="#a0567f" stroke-width="2.5" stroke-linecap="round"/>
 
-    <!-- accessory: heart glasses (outside .mascot-eyes so blinking doesn't squash them) -->
-    <g class="acc acc-bril">
-      <path d="M60 88L49 83M140 88L151 83" stroke="#ff5fa8" stroke-width="3" stroke-linecap="round"/>
-      <path d="M96 89Q100 85 104 89" fill="none" stroke="#ff5fa8" stroke-width="3.5" stroke-linecap="round"/>
-      <g fill="#ffc0de" fill-opacity=".3" stroke="#ff5fa8" stroke-width="3.2" stroke-linejoin="round">
-        <path d="M0 14C-16 4-20-6-16-12C-12-18-4-18 0-10C4-18 12-18 16-12C20-6 16 4 0 14Z" transform="translate(78 95) scale(1.08)"/>
-        <path d="M0 14C-16 4-20-6-16-12C-12-18-4-18 0-10C4-18 12-18 16-12C20-6 16 4 0 14Z" transform="translate(122 95) scale(1.08)"/>
-      </g>
-      <path d="M65 87Q67 82 72 81M109 87Q111 82 116 81" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
-    </g>
+  </g>
 
-    <!-- accessory: bow at the neck -->
-    <g class="acc acc-strik" transform="translate(100 142) scale(1.3) translate(-100 -142)">
-      <g fill="#ff8fbf" stroke="#e86aa6" stroke-width="2" stroke-linejoin="round">
-        <path d="M98 144L92 158L96 157L98 161L101 145ZM102 144L108 158L104 157L102 161L99 145Z"/>
-        <path d="M100 141C95 132 83 130 82 138C81 146 92 149 100 143Z"/>
-        <path d="M100 141C105 132 117 130 118 138C119 146 108 149 100 143Z"/>
-      </g>
-      <rect x="96" y="137" width="8" height="9" rx="3.5" fill="#ff6fae" stroke="#e86aa6" stroke-width="1.5"/>
-      <circle cx="85.5" cy="136.5" r="1.4" fill="#fff" opacity=".8"/><circle cx="114.5" cy="136.5" r="1.4" fill="#fff" opacity=".8"/>
+  <!-- accessory: a little planet and stars circling the unicorn (behind the bunny) -->
+  <g class="acc acc-planeet">
+    <g class="acc-orbit">
+      ${orbitAt(214, PLANET)}${orbitAt(316, orbitStar(8))}${orbitAt(350, orbitStar(5.5))}${orbitAt(152, orbitStar(6.5))}
     </g>
+  </g>
+
+  <!-- accessory: bunny friend, bottom right in front of the body -->
+  <g class="acc acc-konijntje">
+    <g transform="translate(182 159) scale(1.3)"><g class="acc-bunny">
+      <g class="acc-bunny-ear acc-bunny-ear-l"><ellipse cx="-6" cy="-24" rx="5" ry="12" transform="rotate(-12 -6 -24)" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/><ellipse cx="-6" cy="-23" rx="2.3" ry="8" transform="rotate(-12 -6 -23)" fill="#ffc6e2"/></g>
+      <g class="acc-bunny-ear acc-bunny-ear-r"><ellipse cx="6" cy="-24" rx="5" ry="12" transform="rotate(12 6 -24)" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/><ellipse cx="6" cy="-23" rx="2.3" ry="8" transform="rotate(12 6 -23)" fill="#ffc6e2"/></g>
+      <circle cx="13" cy="20" r="4.5" fill="#fff" stroke="#c79bd8" stroke-width="2"/>
+      <ellipse cx="0" cy="16" rx="14" ry="12" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/>
+      <ellipse cx="-8" cy="27" rx="6.5" ry="3.8" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2"/><ellipse cx="8" cy="27" rx="6.5" ry="3.8" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2"/>
+      <ellipse cx="-4.5" cy="13" rx="3" ry="4" fill="#fff" stroke="#c79bd8" stroke-width="1.6"/><ellipse cx="4.5" cy="13" rx="3" ry="4" fill="#fff" stroke="#c79bd8" stroke-width="1.6"/>
+      <circle cx="0" cy="-5" r="12.5" fill="#f1e8fc" stroke="#c79bd8" stroke-width="2.2"/>
+      <ellipse cx="-7.5" cy="-1" rx="2.6" ry="1.6" fill="#ff7fae" opacity=".55"/><ellipse cx="7.5" cy="-1" rx="2.6" ry="1.6" fill="#ff7fae" opacity=".55"/>
+      <circle cx="-4.5" cy="-6" r="1.9" fill="#4a3266"/><circle cx="4.5" cy="-6" r="1.9" fill="#4a3266"/><circle cx="-3.9" cy="-6.7" r=".65" fill="#fff"/><circle cx="5.1" cy="-6.7" r=".65" fill="#fff"/>
+      <path d="M-1.4-3H1.4L0-1.6Z" fill="#ff7fae" stroke="#ff7fae" stroke-width="1" stroke-linejoin="round"/>
+      <path d="M-2.4-.6Q0 1.6 2.4-.6" fill="none" stroke="#4a3266" stroke-width="1.3" stroke-linecap="round"/>
+    </g></g>
   </g>
 </svg>`;
 
@@ -169,12 +187,19 @@ export const mascotCSS = `
 /* accessories: hidden unless worn */
 .mascot .acc { display: none; }
 .mascot .acc.is-worn { display: inline; }
-/* rotate each wing around its root (the local origin set by its parent's translate) */
-.mascot .acc-wing { transform-box: view-box; transform-origin: 0 0; }
+/* orbit around (100 96); each item turns back so it stays upright */
+.mascot .acc-orbit { transform-box: view-box; transform-origin: 100px 96px; }
+.mascot .acc-orbit-item { transform-box: fill-box; transform-origin: 50% 50%; }
+.mascot .acc-bunny,
+.mascot .acc-bunny-ear { transform-box: fill-box; transform-origin: 50% 100%; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .mascot .acc-wing { animation: mascot-flap 1.8s ease-in-out infinite; }
-  .mascot.is-happy .acc-wing { animation: mascot-flap 300ms ease-in-out 2; }
+  .mascot .acc-rainbow { animation: mascot-shimmer 7s ease-in-out infinite; }
+  .mascot .acc-orbit { animation: mascot-orbit 40s linear infinite; }
+  .mascot .acc-orbit-item { animation: mascot-orbit 40s linear infinite reverse; }
+  .mascot .acc-bunny-ear-l { animation: mascot-ear-twitch 5.3s ease-in-out infinite; }
+  .mascot .acc-bunny-ear-r { animation: mascot-ear-twitch 7.1s ease-in-out 1.7s infinite reverse; }
+  .mascot.is-happy .acc-bunny { animation: mascot-hop 600ms ease-out; }
   .mascot { animation: mascot-bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
   .mascot .mascot-tail { animation: mascot-tail 3.2s ease-in-out infinite; }
   .mascot.is-blinking .mascot-eyes { animation: mascot-blink 160ms ease-in-out; }
@@ -220,9 +245,25 @@ export const mascotCSS = `
   0%, 100% { filter: none; }
   40% { filter: drop-shadow(0 0 6px #fff3b0) brightness(1.15); }
 }
-@keyframes mascot-flap {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(12deg); }
+@keyframes mascot-shimmer {
+  0%, 100% { filter: none; opacity: 1; }
+  50% { filter: brightness(1.06) saturate(1.1); opacity: .92; }
+}
+@keyframes mascot-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes mascot-ear-twitch {
+  0%, 88%, 100% { transform: rotate(0deg); }
+  91% { transform: rotate(-14deg); }
+  94% { transform: rotate(8deg); }
+  97% { transform: rotate(-4deg); }
+}
+@keyframes mascot-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  20% { transform: translateY(0) scale(1.08, .9); }
+  50% { transform: translateY(-14px) scale(.96, 1.05); }
+  80% { transform: translateY(0) scale(1.06, .94); }
 }
 @keyframes mascot-nod {
   0%, 100% { transform: rotate(0deg) translateY(0); }

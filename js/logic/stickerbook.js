@@ -62,6 +62,24 @@ export function toggleWorn(book, id, pages, accessories) {
   return { ...book, worn };
 }
 
+/**
+ * When a page is replaced by another theme, moves stickers earned on the old
+ * page (ids starting with `${oldPageId}-`) to the new page one-for-one,
+ * keeping glitter, so progress isn't lost. Works on stored data before
+ * cleanBook().
+ */
+export function carryOverPage(stored, oldPageId, newPage) {
+  if (!stored?.stickers || !newPage) return stored;
+  const old = Object.entries(stored.stickers).filter(([id]) => id.startsWith(`${oldPageId}-`));
+  if (!old.length) return stored;
+  const stickers = Object.fromEntries(Object.entries(stored.stickers).filter(([id]) => !id.startsWith(`${oldPageId}-`)));
+  const free = newPage.stickers.map((s) => s.id).filter((id) => !stickers[id]);
+  old.forEach(([, value], i) => {
+    if (free[i]) stickers[free[i]] = value;
+  });
+  return { ...stored, stickers };
+}
+
 /** Makes stored data safe to use (unknown stickers and locked accessories dropped). */
 export function cleanBook(stored, pages, accessories) {
   const known = new Set(pages.flatMap((p) => p.stickers.map((s) => s.id)));

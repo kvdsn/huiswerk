@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  emptyBook, isPageComplete, currentPage, award, unlockedAccessories, toggleWorn, cleanBook,
+  emptyBook, isPageComplete, currentPage, award, unlockedAccessories, toggleWorn, cleanBook, carryOverPage,
 } from '../js/logic/stickerbook.js';
 
 const page = (id, n) => ({ id, stickers: Array.from({ length: n }, (_, i) => ({ id: `${id}-${i}` })) });
@@ -91,5 +91,29 @@ describe('cleanBook', () => {
   test('keeps a worn accessory whose page is full', () => {
     const book = fill(emptyBook(), 3);
     assert.deepEqual(cleanBook({ ...book, worn: ['kroon'] }, pages, accessories).worn, ['kroon']);
+  });
+});
+
+describe('carryOverPage', () => {
+  const zee = page('zee', 3);
+
+  test('moves earned stickers of a replaced page to the new one, keeping glitter', () => {
+    const stored = { stickers: { 'snoep-x': { glitter: true }, 'snoep-y': { glitter: false }, 'a-0': { glitter: false } }, worn: ['bril'] };
+    assert.deepEqual(carryOverPage(stored, 'snoep', zee), {
+      stickers: { 'a-0': { glitter: false }, 'zee-0': { glitter: true }, 'zee-1': { glitter: false } },
+      worn: ['bril'],
+    });
+  });
+
+  test('a full old page fills the new page, so its accessory stays unlocked', () => {
+    const stored = { stickers: { 'snoep-1': {}, 'snoep-2': {}, 'snoep-3': {} }, worn: [] };
+    const moved = carryOverPage(stored, 'snoep', zee);
+    assert.equal(isPageComplete(moved, zee), true);
+  });
+
+  test('leaves data without old stickers untouched', () => {
+    const stored = { stickers: { 'a-0': { glitter: false } }, worn: [] };
+    assert.equal(carryOverPage(stored, 'snoep', zee), stored);
+    assert.equal(carryOverPage(null, 'snoep', zee), null);
   });
 });

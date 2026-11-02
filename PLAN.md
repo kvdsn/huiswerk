@@ -36,9 +36,10 @@ The child writes the words on paper and says the math answers out loud.
 
 ## Sticker book (stickerboek)
 - Every finished dictation or math round earns one sticker, shown as an envelope to tap open on the results screen. An all-correct round gives the glitter version.
-- 4 themed pages (Regenboog, Snoep, Dieren, Ruimte) with 9 stickers each. Stickers fill the current page first, in random order, with no duplicates. Once the album is full, a perfect round turns a plain sticker into glitter.
-- A full page unlocks an accessory for the unicorn: kroon, bril, strik, vleugels. They can be put on and taken off on the "Eenhoorn aankleden" screen, and the unicorn wears them everywhere in the app.
-- Stored on the device only. Instellingen → Stickerboek → "Stickerboek wissen" (with a confirmation) clears stickers and accessories.
+- 4 themed pages (Regenboog, Zee, Dieren, Ruimte) with 9 stickers each. Stickers fill the current page first, in random order, with no duplicates. Once the album is full, a perfect round turns a plain sticker into glitter.
+- A full page gives the unicorn a themed surprise: Regenboog → a rainbow behind it, Zee → a seashell crown, Dieren → a bunny friend (hops along when an answer is right), Ruimte → a planet with stars circling around. They can be switched on and off on the "Mijn eenhoorn" screen, and show everywhere the unicorn appears.
+- Progress from the first version carries over: Snoep stickers moved to the Zee page, and the old accessories map to the new reward of the same page.
+- Stored on the device only. Instellingen → Stickerboek → "Stickerboek wissen" (with a confirmation) clears stickers and rewards.
 
 ## Math (rekenen)
 - Adding, subtracting and times tables, read out loud, and the child says the answer.
