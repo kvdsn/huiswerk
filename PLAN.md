@@ -16,6 +16,10 @@ The child writes the words on paper and says the math answers out loud.
 - Animations are quick and smooth, at 150–400 ms: screens slide or fade in, buttons bounce when tapped, and the mascot reacts. Nothing makes the child wait. Animations respect the iPad's "Reduce Motion" setting.
 - Large touch targets and a large rounded font that is easy for a child to read. Built for the iPad in both portrait and landscape.
 
+## Help
+- A ❓ button on the home screen opens "Hoe werkt het?": short child-friendly cards for Dictee, Rekenen, talking to the app, and Stickers, each with a 🔊 button that has Ellen read it aloud, plus a card for parents about Instellingen.
+- The sticker book starts with a short explanation of how to earn stickers (also with 🔊).
+
 ## Dictation (dictee)
 - Words come from `data/woordpakketten.json` (26 packages from werkblaadjes.be, 20 words each).
 - Each word is read once on its own. The child can tap a button to hear it again.

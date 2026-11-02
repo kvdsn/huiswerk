@@ -77,7 +77,7 @@ function bindBack() {
 }
 
 function go(name, ...args) {
-  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden };
+  const screens = { home, dicteeKies, rekenenStart, instellingen, inspreken, stickerboek, aankleden, help };
   (screens[name] || home)(...args);
 }
 
@@ -124,7 +124,7 @@ function setMic(state) {
 function home() {
   render(`
     <header class="topbar">
-      <span class="spacer"></span>
+      <button class="icon-btn" id="to-help" aria-label="Hoe werkt het?">❓</button>
       <h1></h1>
       <button class="icon-btn" id="to-settings" aria-label="Instellingen">⚙️</button>
     </header>
@@ -150,6 +150,7 @@ function home() {
   $('#to-rekenen').addEventListener('click', () => go('rekenenStart'));
   $('#to-stickers').addEventListener('click', () => go('stickerboek'));
   $('#to-settings').addEventListener('click', () => go('instellingen'));
+  $('#to-help').addEventListener('click', () => go('help'));
 }
 
 // ---------- Dictation ----------
@@ -770,6 +771,67 @@ async function instellingen() {
   refreshCount();
 }
 
+// ---------- Help ----------
+
+// Short, child-friendly explanations. Each card can be read aloud by Ellen.
+const HELP = [
+  {
+    icon: '✏️',
+    title: 'Dictee',
+    text: `Kies een woordpakket, of “Gemengd” voor woordjes uit alle pakketten.
+      Neem je blad en je potlood. De eenhoorn zegt een woord, en jij schrijft het op.
+      Zeg “klaar” als je het geschreven hebt. Wil je het nog eens horen? Zeg “wablieft?”.
+      Op het einde kijk je je blad na: tik op het kruisje bij een fout.`,
+  },
+  {
+    icon: '🔢',
+    title: 'Rekenen',
+    text: `De eenhoorn zegt een som. Zeg het antwoord hardop, of typ het en tik op OK.
+      Was het fout? Dan mag je nog een keer proberen.`,
+  },
+  {
+    icon: '🎤',
+    title: 'Praten met de app',
+    text: `Als je het groene bolletje ziet bij “Ik luister”, mag je praten.
+      Zeg “klaar”, “ja”, “oké” of “volgende” om verder te gaan.
+      Zeg “wablieft?”, “wat?” of “zeg nog eens” om het nog eens te horen.
+      Werkt praten niet? Dan kan je altijd de knoppen gebruiken.`,
+  },
+  {
+    icon: '📒',
+    title: 'Stickers',
+    text: `Na elk dictee en elke rekenronde krijg je een envelop met een sticker.
+      Alles juist? Dan krijg je een glittersticker.
+      Is een pagina in je stickerboek vol, dan krijgt je eenhoorn een verrassing.
+      Bij “Mijn eenhoorn” kies je wat je eenhoorn bij zich heeft.`,
+  },
+];
+
+function help() {
+  render(`
+    ${topbar('Hoe werkt het?')}
+    <div class="settings">
+      ${HELP.map((part, i) => `
+        <div class="card help-card" style="--i:${i}">
+          <div class="help-head">
+            <h2>${part.icon} ${escape(part.title)}</h2>
+            <button class="icon-btn" data-say="${i}" aria-label="Lees voor: ${escape(part.title)}">🔊</button>
+          </div>
+          <p>${escape(part.text.replace(/\s+/g, ' '))}</p>
+        </div>`).join('')}
+      <div class="card help-card">
+        <h2>🧑‍🧒 Voor ouders</h2>
+        <p>Bij ⚙️ Instellingen kies je de woordpakketten, de soort sommen, de naam, de stem en de geluidjes.
+          Je kan er ook de woordjes zelf inspreken, en je opnames bewaren in een reservekopie.</p>
+      </div>
+    </div>
+  `);
+  bindBack();
+  $$('[data-say]').forEach((btn) =>
+    btn.addEventListener('click', () => say(HELP[Number(btn.dataset.say)].text.replace(/\s+/g, ' '))),
+  );
+}
+
 // ---------- Sticker book ----------
 
 const stickerCount = () => Object.keys(book.stickers).length;
@@ -830,6 +892,12 @@ function stickerboek(pageId) {
     STICKER_PAGES[0];
   render(`
     ${topbar('Stickerboek')}
+    <div class="explain">
+      <p>Na elk <b>dictee</b> en elke <b>rekenronde</b> krijg je een envelop met een sticker.
+        Alles juist? Dan is je sticker een <b>glittersticker</b> ✨.
+        Is een pagina vol, dan krijgt je eenhoorn een <b>verrassing</b>!</p>
+      <button class="icon-btn" id="explain-say" aria-label="Lees voor">🔊</button>
+    </div>
     <div class="chips page-tabs" role="tablist"></div>
     <div class="card album-page">
       <div class="sticker-grid"></div>
@@ -865,6 +933,7 @@ function stickerboek(pageId) {
   }
 
   $('#to-wardrobe').addEventListener('click', () => go('aankleden'));
+  $('#explain-say').addEventListener('click', () => say($('.explain p').textContent.replace(/\s+/g, ' ')));
   showPage(startPage);
 }
 

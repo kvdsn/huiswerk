@@ -441,7 +441,26 @@ button {
   font-weight: 700;
 }
 
+/* ---------- Help ---------- */
+
+.help-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.help-head h2 { margin: 0; }
+.settings .help-card p { font-size: 20px; line-height: 1.5; color: var(--ink); margin: 0; }
+.help-card { animation: pop-in var(--medium) var(--bounce) both; animation-delay: calc(var(--i, 0) * 50ms); }
+
 /* ---------- Stickers ---------- */
+
+.explain {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--shadow);
+}
+.explain p { margin: 0; flex: 1; font-size: 19px; line-height: 1.45; }
+.explain .icon-btn { flex: none; }
 
 .menu .wide-tile { grid-column: 1 / -1; min-height: 110px; flex-direction: row; gap: 16px; }
 .menu .wide-tile small { display: block; }
